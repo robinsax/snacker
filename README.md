@@ -1,6 +1,6 @@
 # Robin's snacker snake
 
-*This is a WIP.*
+*This is a WIP. You can tell because it's O(n^23482).*
 
 The strategy for this snake is:
 * For navigation, use A*
