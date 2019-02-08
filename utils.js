@@ -28,6 +28,7 @@ const shuffle = a => {
 
 //	Create a key-ready representation of a point of O(1) lookups.
 const keyable = ({x, y}) => x + ',' + y;
+const unkey = s => s.split(',').map(parseInt);
 
 //	Cartesian distance in N between points.
 const rectilinearDistance = (from, to) => Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
@@ -112,5 +113,5 @@ const aStarTo = (from, to, size, toAvoid=[]) => {
 module.exports = { 
 	directionTo, rectilinearDistance, nearestFood,
 	isBeside, aStarTo, safeNeighbors, allNeighbors, equal,
-	cellAt, keyable
+	cellAt, keyable, unkey
 };
