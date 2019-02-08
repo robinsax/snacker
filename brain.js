@@ -36,6 +36,8 @@ const safeMoveToFood = (face, food, body, size, occupied, cellOpts) => {
 	}
 };
 
+
+
 const computeMove = req => {
 	//	Comprehend state.
 	let { board: {height, width, food, snakes}, you: {id, body} } = req.body,
@@ -75,7 +77,7 @@ const computeMove = req => {
 		console.log('extreme failure!');
 		return 'down';
 	}
-}
+};
 
 module.exports = {
 	computeMove

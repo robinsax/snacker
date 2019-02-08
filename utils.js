@@ -16,7 +16,18 @@ const tell = (lbl, fn, idt=true) => (...args) => {
 	return rv;
 };
 
-//	Fisher-Yates shuffle. Doesn't mutate original.
+//	Flatten an array of any depth.
+const flatten = a => {
+	let result = [];
+	
+	a.forEach(b => {
+		if (b instanceof Array) result = result.concat(flatten(b));
+		else result.push(b);
+	});
+
+	return result;
+}
+//	Fisher-Yates shuffle an array. Doesn't mutate original.
 const shuffle = a => {
 	a = [...a];
     for (let i = a.length - 1; i > 0; i--) {
@@ -28,7 +39,16 @@ const shuffle = a => {
 
 //	Create a key-ready representation of a point of O(1) lookups.
 const keyable = ({x, y}) => x + ',' + y;
-const unkey = s => s.split(',').map(parseInt);
+//	Recreate a point from a keyed representation.
+const unkey = s => (([x, y]) => { return {x, y}; })(s.split(',').map(n => parseInt(n)));
+//	Convert a list of points to a map.
+const mapify = l => {
+	let map = {};
+	l.forEach(pt => map[keyable(pt)] = true);
+	return map;
+}
+//	Convert a map of points into an unordered list.
+const listify = m => Object.keys(m).map(k => unkey(k));
 
 //	Cartesian distance in N between points.
 const rectilinearDistance = (from, to) => Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
@@ -109,9 +129,45 @@ const aStarTo = (from, to, size, toAvoid=[]) => {
 	return path.map(nodeToXY);
 };
 
+//	Compute the position of a snake later given its set of moves. Doesn't
+//	assert the moved-to positions are valid.
+const positionAfterMoves = (snk, mvs) => [...mvs, ...snk.filter((p, i) => (
+	i < (snk.length - mvs.length)
+))];
+
+//	Compute the probabilistic positions of a snake after n moves given it won't
+//	hit barriers. Assumes randomly distributed movement selection. Don't pass large 
+//	n in prod.
+//	XXX: Top notch shit would weight result with a heuristic.
+const positionPsAfterMoves = (snk, avoid, size, n, rp=1.0) => {
+	if (n == 0) return [];
+	let ar = [];
+	
+	//	Compute neighbors.
+	let neighbors = safeNeighbors(snk, avoid, size), pHere = rp/neighbors.length;
+	//	Maybe done. Note there's never repeats here.
+	if (n == 1) return neighbors.map(ne => { return {tile: ne, p: pHere}; });
+
+	//	Step out. Note this could create duplicates.
+	let nearby = neighbors.map(ne => (
+			positionPsAfterMoves(ne, avoid, size, n - 1, pHere, ar
+		))), flat = flatten(nearby);
+	//	Collate repeats.
+	let map = {};
+	flat.forEach(({tile, p}) => {
+		let nk = keyable(tile);
+		map[nk] = map[nk] || 0;
+		map[nk] += p;
+	});
+	//	Return result.
+	//	XXX: This is the dumbest thing ever.
+	return listify(map).map(pt => { return {tile: pt, p: map[keyable(pt)]}; });	
+};
+
 //	Exports.
 module.exports = { 
 	directionTo, rectilinearDistance, nearestFood,
 	isBeside, aStarTo, safeNeighbors, allNeighbors, equal,
-	cellAt, keyable, unkey
+	cellAt, keyable, unkey, positionAfterMoves, mapify,
+	positionPsAfterMoves, listify
 };
