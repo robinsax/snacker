@@ -50,12 +50,28 @@ const mapify = l => {
 //	Convert a map of points into an unordered list.
 const listify = m => Object.keys(m).map(k => unkey(k));
 
+//	Remove duplicates from a list of points.
+const uniques = l => {
+	let m = {};
+	return l.filter(a => {
+		let k = keyable(a);
+		if (!m[k]) return true;
+		m[k] = true;
+		return false;
+	});
+};
+
 //	Cartesian distance in N between points.
 const rectilinearDistance = (from, to) => Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 //	Point adjacency check.
 const isBeside = (a, b) => ((Math.abs(a.x - b.x) < 2) && (Math.abs(a.y - b.y) < 2));
-//	Point equality check,
+//	Point equality check.
 const equal = (a, b) => ((a.x == b.x) && (a.y == b.y));
+//	Point set equality.
+const deepEqual = (a, b) => {
+	let aMap = mapify(a);
+	return b.filter(c => !aMap[keyable(c)]).length == 0;
+};
 
 //	Return all neighboring cells on the board.
 const allNeighbors = ({x, y}, {width, height}) => [
@@ -164,10 +180,46 @@ const positionPsAfterMoves = (snk, avoid, size, n, rp=1.0) => {
 	return listify(map).map(pt => { return {tile: pt, p: map[keyable(pt)]}; });	
 };
 
+//	Calculate the set of chokepoints.
+const chokeMat = (walls, size) => {
+	let mx = [];
+	//	Boundary expansion.
+	const pushFront = (s, k=0, lkup=null) => {
+		//	Base case.
+		if (s.length == 0) return;
+		lkup = lkup || {};
+
+		//	Propagate out.
+		let next = [];
+		s.forEach(pt => {
+			mx[pt.y][pt.x] = mx[pt.y][pt.x] || k;
+			lkup[keyable(pt)] = true;
+			next = next.concat(safeNeighbors(pt, walls, size));
+		});
+		//	Reduce to unvisited.
+		next = next.filter(a => !lkup[keyable(a)]);
+
+		pushFront(next, k + 1, lkup);
+	};
+
+	//	Create matrix.
+	let {width, height} = size;
+	for (let i = 0; i < width; i++) {
+		let row = [];
+		for (let j = 0; j < height; j++) row.push(0);
+		mx.push(row);
+	}
+	//	Propagate matrix updates.
+	pushFront(walls);
+
+	return {matrix: mx};
+};
+
 //	Exports.
 module.exports = { 
 	directionTo, rectilinearDistance, nearestFood,
 	isBeside, aStarTo, safeNeighbors, allNeighbors, equal,
 	cellAt, keyable, unkey, positionAfterMoves, mapify,
-	positionPsAfterMoves, listify
+	positionPsAfterMoves, listify, chokeMat,
+	deepEqual, uniques
 };
