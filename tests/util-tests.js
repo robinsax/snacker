@@ -1,4 +1,4 @@
-const { positionAfterMoves, positionPsAfterMoves, chokeMat } = require('../utils.js');
+const { positionAfterMoves, positionPsAfterMoves, chokeMat, chokePoints } = require('../utils.js');
 
 const strToBoard = str => {
 	str = str.trim();
@@ -28,11 +28,11 @@ console.log(positionAfterMoves(snk, [{x: 1, y: 2}]));
 console.log('p pred');
 let { pt, walls, size } = strToBoard(`
 	......
-	.###..
+	...#..
 	*.....
-	####..
+	...#..
 	......
-	....##
+	......
 `);
 console.log('\tfrom', pt, walls);
 console.log(positionPsAfterMoves(pt, walls, size, 10));
