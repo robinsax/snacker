@@ -46,6 +46,15 @@ const createMat = ({width, height}, initCellVal) => {
 	return mx;
 };
 
+/** Move point north once. */
+const north = ({x, y}) => { return {x, y: y - 1}; };
+/** Move point south once. */
+const south = ({x, y}) => { return {x, y: y + 1}; };
+/** Move point east once. */
+const east = ({x, y}) => { return {x: x + 1, y}; };
+/** Move point west once. */
+const west = ({x, y}) => { return {x: x - 1, y}; };
+
 /** Create a key-ready representation of a point of O(1) lookups. */
 const keyable = ({x, y}) => x + ',' + y;
 /** Recreate a point from a keyed representation. */
@@ -53,7 +62,9 @@ const unkey = s => (([x, y]) => { return {x, y}; })(s.split(',').map(n => parseI
 /** Convert a list of points to a map. */
 const mapify = l => {
 	let map = {};
-	l.forEach(pt => map[keyable(pt)] = true);
+	l.forEach(pt => {
+		map[keyable(pt)] = true
+	});
 	return map;
 }
 /** Convert a map of points into an unordered list. */
@@ -152,7 +163,7 @@ class Snake {
 
 /** The game state comprehension with utilies. */
 class GameState {
-	constructor({board: {width, height, snakes, food}, you: {id}}) {
+	constructor({game, board: {width, height, snakes, food}, you: {id}}) {
 		this.size = {width, height};
 		this.snakes = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
 		this.opponents = this.snakes.filter(s => !s.self);
@@ -165,11 +176,22 @@ class GameState {
 
 		//	Build occupation matrix.
 		this.occupationMx = createMat(this.size, () => 0);
-		this.snakes.forEach(s => s.body.forEach(({x, y}) => this.occupationMx[y][x] = s.i));
+		this.snakes.forEach(s => s.body.forEach(({x, y}, i) => {
+			if (i < s.body.length - 1) this.occupationMx[y][x] = s.i;
+		}));
+		this.dangerousOccupationMx = this.occupationMx.map(a => [...a]);
 		//	Add opponent next-move avoidance.
 		this.opponents.forEach(o => (
 			this.safeNeighbors(o.head).forEach(({x, y}) => this.occupationMx[y][x] = o.i)
 		));
+
+		//	Optimization data structures.
+		this.o_cellAtMap = {};
+	}
+
+	/** Return the to-be-saved representation of this state. */
+	save() {
+		return {};
 	}
 
 	/** Return all on-board neighboring points to the given point. */
@@ -187,16 +209,21 @@ class GameState {
 	*	Return all on-board neighbors to the given point that aren't considered 
 	*	occupied. 
 	*/
-	safeNeighbors(pt) {
-		return this.allNeighbors(pt).filter(({x, y}) => !this.occupationMx[y][x]);
+	safeNeighbors(pt, mx=null) {
+		mx = mx || this.occupationMx;
+		return this.allNeighbors(pt).filter(({x, y}) => !mx[y][x]);
 	}
 
 	/**
-	*	Compute the "cell" at a given point.
+	*	Compute the "cell" at a given point. Optional arguments used for recursion.
 	*
 	*	XXX: Naive. 
 	*/
-	cellAt(pt, avoid, size, ar=null, lkup=null) {
+	cellAt(pt, ar=null, lkup=null) {
+		//	Check map.
+		let ptK = keyable(pt);
+		if (this.o_cellAtMap[ptK]) return this.o_cellAtMap[ptK];
+
 		//	Populate defaults.
 		ar = ar || [];
 		lkup = lkup || {};
@@ -211,22 +238,26 @@ class GameState {
 		//	Recurse.
 		neighbors.forEach(n => ar = this.cellAt(n, ar, lkup));
 	
+		this.o_cellAtMap[ptK] = ar;
 		return ar;
 	}
 
 	/** Run A* pathfinding between two points. */
-	aStarTo(from, to) {
+	aStarTo(from, to, ext=null) {
 		const xyToNode = ({ x, y }) => [x, y],
 			nodeToXY = ([x, y]) => { return {x, y}; };
+		let mx = this.occupationMx;
+		if (ext) {
+			mx = mx.map(a => [...a]);
+			ext.forEach(({x, y}) => mx[y][x] = true);
+		}
 
 		let { status, path } = aStar({
 			start: xyToNode(from),
 			isEnd: ([x, y]) => equal(to, {x, y}),
 			distance: (a, b) => rectilinearDistance(nodeToXY(a), nodeToXY(b)),
 			heuristic: a => rectilinearDistance(nodeToXY(a), to),
-			neighbor: a => this.allNeighbors(nodeToXY(a)).filter(b => (
-				!this.occupationMx[b.y][b.x]
-			)).map(xyToNode)
+			neighbor: a => this.safeNeighbors(nodeToXY(a), mx).map(xyToNode)
 		});
 
 		if (status != 'success') return null;
@@ -265,5 +296,6 @@ class GameState {
 module.exports = { 
 	directionTo, rectilinearDistance,
 	isBeside, equal, keyable, unkey, mapify, listify,
-	deepEqual, uniques, createMat, GameState, Snake
+	deepEqual, uniques, createMat, south, north, east, west, 
+	GameState, Snake
 };

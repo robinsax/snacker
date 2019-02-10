@@ -1,7 +1,5 @@
 const bodyParser = require('body-parser');
-const express = require('express');
-const logger = require('morgan');
-const app = express();
+const app = require('express')();
 const {
 	fallbackHandler, notFoundHandler, genericErrorHandler, poweredByHandler
 } = require('./handlers.js');
@@ -18,29 +16,36 @@ const errorLogged = fn => (...args) => {
 	}
 };
 
-app.set('port', (process.env.PORT || 9001));
+const stateStorage = {};
 
-//app.enable('verbose errors');
-//app.use(logger('dev'));
+app.set('port', (process.env.PORT || 9001));
 
 app.use(bodyParser.json());
 app.use(poweredByHandler);
 
 app.post('/start', (req, resp) => {
-	return req.json({
-		color: '#DFFF00',
-	});
+	let {game: {id}} = req.body;
+	stateStorage[id] = {__turn: 0};
+
+	return resp.json({});
 });
 
 app.post('/move', errorLogged((req, resp) => {
-	move = computeMove(req);
+	let {game: {id}} = req.body,
+		{__turn, ...lastState} = stateStorage[id];
+	console.log('begin turn ' + __turn);
+	let {move, state} = computeMove(req.body, lastState);
 
+	stateStorage[id] = {...state, __turn: __turn + 1};
 	console.log('move', move); 
 	return resp.json({ move });
 }));
 
-app.post('/end', (request, response) => {
-	return response.json({})
+app.post('/end', (req, resp) => {
+	let {game: {id}} = req.body;
+	delete stateStorage[id];
+	
+	return resp.json({})
 });
 
 app.post('/ping', (request, response) => {
