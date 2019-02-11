@@ -5,7 +5,8 @@
 ## Packaging
 
 * `brain.js` does high level strategy
-* `utils.js` contains game state comprehension, algorithms, helpers, etc
+* `utils.js` contains game state comprehension, algorithms, helpers, etc.
+	Also performs some rudimentary intellegence in comprehension.
 
 ## Data structures
 
@@ -31,3 +32,8 @@ Non-trivial algorithms included so far:
 	point search to detect opponent trapping opportunies.
 
 These algorithms are packed in the utilities module.
+
+## Triage
+
+Triage is my term for when the snake knows it can't safely do what it ideally would,
+so it tries to get/stay out of trouble.

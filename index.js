@@ -15,7 +15,7 @@ const errorLogged = fn => (...args) => {
 		throw ex;
 	}
 };
-
+const mode = process.env.MODE;
 const stateStorage = {};
 
 app.set('port', (process.env.PORT || 9001));
@@ -25,24 +25,26 @@ app.use(poweredByHandler);
 
 app.post('/start', (req, resp) => {
 	let {game: {id}} = req.body;
-	stateStorage[id] = {__turn: 0};
+	console.log('start game', id);
+	stateStorage[id] = {turn: 0};
 
 	return resp.json({});
 });
 
 app.post('/move', errorLogged((req, resp) => {
 	let {game: {id}} = req.body,
-		{__turn, ...lastState} = stateStorage[id];
-	console.log('begin turn ' + __turn);
-	let {move, state} = computeMove(req.body, lastState);
+		{turn} = stateStorage[id];
+	console.log('begin turn ' + turn);
+	let {move, state} = computeMove(req.body, stateStorage[id], +mode);
 
-	stateStorage[id] = {...state, __turn: __turn + 1};
+	stateStorage[id] = {...state, turn: turn + 1};
 	console.log('move', move); 
 	return resp.json({ move });
 }));
 
 app.post('/end', (req, resp) => {
 	let {game: {id}} = req.body;
+	console.log('end game', id);
 	delete stateStorage[id];
 	
 	return resp.json({})

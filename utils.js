@@ -13,6 +13,9 @@ const MOVE_OPS = [
 
 //	Helpers.
 
+/** Print a matrix. */
+const showMat = mx => mx.map(r => r.join('')).join('\n');
+
 /** Flatten an array of any depth. */
 const flatten = a => {
 	let result = [];
@@ -106,12 +109,21 @@ const directionTo = (from, to) => shuffle(MOVE_OPS).filter(([cond, ...t]) => (
 
 /** Snake comprehension with utilities. */
 class Snake {
-	constructor({body, health, id}, i, self) {
+	constructor({body, health, id}, i, self, future=false) {
 		this.body = body;
 		this.health = health;
 		this.self = self;
 		this.id = id;
 		this.i = i;
+		this.future = future;
+	}
+
+	/**
+	*	Create a future version of this snake after it takes the given move. 
+	*/
+	createFuture(move) {
+		let {health, id, i, self} = this;
+		return new Snake({body: this.positionAfterMoves([move]), health, id}, i, self, true);
 	}
 
 	/**
@@ -122,14 +134,8 @@ class Snake {
 		let trim = this.body.length - moves.length;
 		return [...moves, ...this.body.filter((p, i) => i < trim)];
 	}
-
-	/**
-	*	Create a board-matrix where each cell is the probabilty this snakes
-	*	head will occupy it after n moves.
-	*
-	*	XXX: Naive.
-	*/
-	headPositionPsAfterTurns(game, n, rootP=1.0) {
+	
+	/*headPositionPsAfterTurns(game, n, rootP=1.0) {
 		//	Point-visit logic. Returns an array.
 		const visit = (pt, m, rp) => {
 			if (m == 0) return [];
@@ -156,29 +162,38 @@ class Snake {
 		visit(this.head, n, rootP).forEach(({tile: {x, y}, p}) => mx[y][x] += p);
 
 		return mx;
-	}
+	}*/
 
 	get head() { return this.body[0]; }
 }
 
-/** The game state comprehension with utilies. */
-class GameState {
-	constructor({game, board: {width, height, snakes, food}, you: {id}}) {
-		this.size = {width, height};
-		this.snakes = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
-		this.opponents = this.snakes.filter(s => !s.self);
-		this.self = this.snakes.filter(s => s.self)[0];
-
+/** The base game state class. */
+class BaseGameState {
+	constructor({size, snakes, self, opponents, food, turn}) {
+		this.size = size;
+		this.snakes = snakes;
+		this.opponents = opponents;
+		this.self = self;
+		this.turn = turn;
+		
 		//	Sort food.
 		this.food = food.sort((a, b) => (
 			rectilinearDistance(a, this.self.head) - rectilinearDistance(b, this.self.head)
 		));
+		//	Mapify for constant time lookup.
+		this.foodMap = mapify(this.food);
 
 		//	Build occupation matrix.
 		this.occupationMx = createMat(this.size, () => 0);
-		this.snakes.forEach(s => s.body.forEach(({x, y}, i) => {
-			if (i < s.body.length - 1) this.occupationMx[y][x] = s.i;
-		}));
+		this.snakes.forEach(s => {
+			//	Add snake to occupation matrix, excluding it's tail segment if it
+			//	definitely can't expand on the next move.
+			let nearFood = this.allNeighbors(s.head).filter(a => this.foodMap[keyable(a)]).length == 0;
+			s.body.forEach(({x, y}, i) => {
+				if (nearFood || (i < s.body.length - 1)) this.occupationMx[y][x] = s.i;
+			});
+		});
+		//	Save "dangerous" version to be used in triage.
 		this.dangerousOccupationMx = this.occupationMx.map(a => [...a]);
 		//	Add opponent next-move avoidance.
 		this.opponents.forEach(o => (
@@ -189,11 +204,28 @@ class GameState {
 		this.o_cellAtMap = {};
 	}
 
-	/** Return the to-be-saved representation of this state. */
-	save() {
-		return {};
-	}
+	/**  
+	*	Create all top-probability 1-future states from this game state for the 
+	*	given self move.
+	*
+	*	TODO: Unfinished (opponents).
+	*/
+	createFutures(mv) {
+		let nextOpponentSets = this.opponents.map(s => (
+				this.safeNeighbors(s.head, this.dangerousOccupationMx).map(n => (
+					s.createFuture(n)
+				))
+			)), 
+			nextSelf = this.self.createFuture(mv),
+			nextSnakes = [nextSelf].sort((a, b) => a.i - b.i);
 
+		let {size, food, turn} = this;
+		return new FutureGameState({
+			size, snakes: nextSnakes,
+			self: nextSelf, opponents: [], food, turn
+		});
+	}
+	
 	/** Return all on-board neighboring points to the given point. */
 	allNeighbors({x, y}) {
 		let {width, height} = this.size; 
@@ -219,7 +251,8 @@ class GameState {
 	*
 	*	XXX: Naive. 
 	*/
-	cellAt(pt, ar=null, lkup=null) {
+	cellAt(pt, mx=null, ar=null, lkup=null) {
+		mx = mx || this.occupationMx;
 		//	Check map.
 		let ptK = keyable(pt);
 		if (this.o_cellAtMap[ptK]) return this.o_cellAtMap[ptK];
@@ -229,14 +262,14 @@ class GameState {
 		lkup = lkup || {};
 	
 		//	Find neighbors not already visited.
-		let neighbors = this.safeNeighbors(pt).filter(a => !lkup[keyable(a)]);
+		let neighbors = this.safeNeighbors(pt, mx).filter(a => !lkup[keyable(a)]);
 	
 		//	Add neighbors.
 		ar = ar.concat(neighbors);
 		neighbors.forEach(n => lkup[keyable(n)] = true);
 		
 		//	Recurse.
-		neighbors.forEach(n => ar = this.cellAt(n, ar, lkup));
+		neighbors.forEach(n => ar = this.cellAt(n, mx, ar, lkup));
 	
 		this.o_cellAtMap[ptK] = ar;
 		return ar;
@@ -263,8 +296,8 @@ class GameState {
 		if (status != 'success') return null;
 		return path.map(nodeToXY);
 	}
-
-	/** Compute the choke matrix for the current turn. */
+	
+	/** Compute the choke matrix for this state. */
 	computeChokeMap() {
 		let mx = createMat(this.size, () => 0);
 		//	Boundary expansion.
@@ -290,6 +323,38 @@ class GameState {
 	
 		return mx;
 	}
+
+	/** Return a string representation of this state. TODO: Unfinished. */
+	repr() {
+		let lines = ['--- turn ' + this.turn + (this instanceof FutureGameState ? ' (future)' : '') + ' ---'];
+	
+		return lines.join('\n');
+	}
+}
+
+/** Current game state comprehension with utilies. */
+class TrueGameState extends BaseGameState {
+	constructor({board: {width, height, snakes, food}, you: {id}}, {turn}) {
+		let snakeOs = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
+		super({
+			size: {width, height}, snakes: snakeOs, food, turn,
+			self: snakeOs.filter(s => s.self)[0],
+			opponents: snakeOs.filter(s => !s.self)
+		});
+	}
+
+	/** Return the to-be-saved representation of this state. */
+	save() {
+		return {};
+	}
+}
+
+/** A future game state. */
+class FutureGameState extends BaseGameState {
+	constructor(stateData, probability=0.0) {
+		super(stateData);
+		this.probability = probability;
+	}
 }
 
 //	Exports.
@@ -297,5 +362,6 @@ module.exports = {
 	directionTo, rectilinearDistance,
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
-	GameState, Snake
+	showMat,
+	TrueGameState, FutureGameState, Snake
 };

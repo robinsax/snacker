@@ -1,6 +1,6 @@
 /** High level thinking. */
 const {
-	GameState, directionTo, rectilinearDistance,
+	TrueGameState, directionTo, rectilinearDistance,
 	north, west, east, south, keyable, mapify
 } = require('./utils.js');
 
@@ -14,7 +14,7 @@ const conserveSpaceMove = (snk, cell) => {
 	if (cellMap[keyable(east(snk.head))]) return 'right';
 	
 	console.log("i can't conserve in that cell");
-	return 'up';
+	return null;
 };
 
 /** Compute a move to a point with safety checks. */
@@ -41,10 +41,13 @@ const safeMove = (snk, to, state, cells=null, stops=null) => {
 };
 
 /** Compute the move for the given request. */
-const computeMove = (data, lastState) => {
-	let state = new GameState(data, lastState), move = null;
+const computeMove = (data, lastState, mode) => {
+	let state = new TrueGameState(data, lastState), move = null;
 	const wrap = m => { return {move: m, state: state.save()}; };
 
+	console.log(state.dangerousOccupationMx);
+
+	//	Maybe get some food.
 	state.food.forEach(f => {
 		if (move) return;
 
@@ -56,15 +59,28 @@ const computeMove = (data, lastState) => {
 	let cells = [];
 	cells = state.safeNeighbors(state.self.head).map(pt => (
 		state.cellAt(pt)
-	)).sort((a, b) => b.length - a.length);
-	console.log('conserving space | naive option count: ', cells.length);
-	cells.forEach(cell => {
+	)).filter(c => c.length > state.self.head);
+	console.log('conserving space | naive option count: ', cells.length, 'vs len', state.self.body.length);
+	if (cells.length == 0) {
+		cells = state.safeNeighbors(state.self.head, state.dangerousOccupationMx).map(pt => (
+			state.cellAt(pt, state.dangerousOccupationMx)
+		));
+		console.log('\tno options, getting dangerous | naive option count: ' + cells.length);
+		console.log('\t', cells);
+	}
+	cells.sort((a, b) => b.length - a.length).forEach(cell => {
 		if (move) return;
 
-		console.log('try', cell);
+		console.log('try cell', cell);
 		move = conserveSpaceMove(state.self, cell);
 	});
 	if (move) return wrap(move);
+
+	let open = state.safeNeighbors(state.self.head, state.dangerousOccupationMx)[0];
+	if (open) {
+		console.log('buying time at', open);
+		return wrap(directionTo(state.self.head, open));
+	}
 
 	console.log('sorry, i suck');
 	return wrap('left');
