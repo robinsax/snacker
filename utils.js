@@ -109,21 +109,12 @@ const directionTo = (from, to) => shuffle(MOVE_OPS).filter(([cond, ...t]) => (
 
 /** Snake comprehension with utilities. */
 class Snake {
-	constructor({body, health, id}, i, self, future=false) {
+	constructor({body, health, id}, i, self) {
 		this.body = body;
 		this.health = health;
 		this.self = self;
 		this.id = id;
 		this.i = i;
-		this.future = future;
-	}
-
-	/**
-	*	Create a future version of this snake after it takes the given move. 
-	*/
-	createFuture(move) {
-		let {health, id, i, self} = this;
-		return new Snake({body: this.positionAfterMoves([move]), health, id}, i, self, true);
 	}
 
 	/**
@@ -168,12 +159,12 @@ class Snake {
 }
 
 /** The base game state class. */
-class BaseGameState {
-	constructor({size, snakes, self, opponents, food, turn}) {
-		this.size = size;
-		this.snakes = snakes;
-		this.opponents = opponents;
-		this.self = self;
+class GameState {
+	constructor({board: {width, height, snakes, food}, you: {id}}, {turn}) {
+		this.size = {width, height};
+		this.snakes = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
+		this.opponents = this.snakes.filter(s => !s.self);
+		this.self = this.snakes.filter(s => s.self)[0];
 		this.turn = turn;
 		
 		//	Sort food.
@@ -203,27 +194,10 @@ class BaseGameState {
 		//	Optimization data structures.
 		this.o_cellAtMap = {};
 	}
-
-	/**  
-	*	Create all top-probability 1-future states from this game state for the 
-	*	given self move.
-	*
-	*	TODO: Unfinished (opponents).
-	*/
-	createFutures(mv) {
-		let nextOpponentSets = this.opponents.map(s => (
-				this.safeNeighbors(s.head, this.dangerousOccupationMx).map(n => (
-					s.createFuture(n)
-				))
-			)), 
-			nextSelf = this.self.createFuture(mv),
-			nextSnakes = [nextSelf].sort((a, b) => a.i - b.i);
-
-		let {size, food, turn} = this;
-		return new FutureGameState({
-			size, snakes: nextSnakes,
-			self: nextSelf, opponents: [], food, turn
-		});
+	
+	/** Return the to-be-saved representation of this state. */
+	save() {
+		return {};
 	}
 	
 	/** Return all on-board neighboring points to the given point. */
@@ -332,36 +306,10 @@ class BaseGameState {
 	}
 }
 
-/** Current game state comprehension with utilies. */
-class TrueGameState extends BaseGameState {
-	constructor({board: {width, height, snakes, food}, you: {id}}, {turn}) {
-		let snakeOs = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
-		super({
-			size: {width, height}, snakes: snakeOs, food, turn,
-			self: snakeOs.filter(s => s.self)[0],
-			opponents: snakeOs.filter(s => !s.self)
-		});
-	}
-
-	/** Return the to-be-saved representation of this state. */
-	save() {
-		return {};
-	}
-}
-
-/** A future game state. */
-class FutureGameState extends BaseGameState {
-	constructor(stateData, probability=0.0) {
-		super(stateData);
-		this.probability = probability;
-	}
-}
-
 //	Exports.
 module.exports = { 
 	directionTo, rectilinearDistance,
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
-	showMat,
-	TrueGameState, FutureGameState, Snake
+	showMat, GameState, Snake
 };

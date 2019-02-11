@@ -1,6 +1,6 @@
 /** High level thinking. */
 const {
-	TrueGameState, directionTo, rectilinearDistance,
+	GameState, directionTo, rectilinearDistance,
 	north, west, east, south, keyable, mapify
 } = require('./utils.js');
 
@@ -42,7 +42,7 @@ const safeMove = (snk, to, state, cells=null, stops=null) => {
 
 /** Compute the move for the given request. */
 const computeMove = (data, lastState, mode) => {
-	let state = new TrueGameState(data, lastState), move = null;
+	let state = new GameState(data, lastState), move = null;
 	const wrap = m => { return {move: m, state: state.save()}; };
 
 	console.log(state.dangerousOccupationMx);
