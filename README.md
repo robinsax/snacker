@@ -2,7 +2,7 @@
 
 *WIP, I'm mostly building out utilities at the moment*.
 
-*Records: Turn 821 solo, Turn 523 vs. a variant of self*.
+*Records (on 15^2 board): Turn 1289 solo, Turn 523 vs. a variant of self*.
 
 ## Packaging
 

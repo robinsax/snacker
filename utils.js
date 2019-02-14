@@ -154,11 +154,14 @@ const createSquigglesIn = (pt, cell) => {
 class Snake {
 	constructor({body, health, id}, i, self) {
 		this.body = body;
-		this.bodyMap = mapify(body);
 		this.health = health;
 		this.self = self;
 		this.id = id;
 		this.i = i;
+
+		//	Create body point, index in segments map.
+		this.bodyMap = {};
+		this.body.forEach((pt, i) => this.bodyMap[keyable(pt)] = i);
 	}
 
 	/**

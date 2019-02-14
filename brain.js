@@ -20,7 +20,6 @@ const conserveSpaceMove = (state, snk) => {
 		state.cellAt(pt)
 	)).filter(c => c.length > snk.head);
 	console.log('conserving space | noc: ', cells.length, 'vs len', snk.body.length);
-
 	//	As a fallback find cells without safe access.
 	if (cells.length == 0) {
 		cells = state.safeNeighbors(snk.head, state.dangerousOccupationMx).map(pt => (
@@ -29,6 +28,7 @@ const conserveSpaceMove = (state, snk) => {
 		console.log('\tno safe options, getting dangerous | noc: ' + cells.length);
 	}
 
+	//	Collect optimizations in the found cells.
 	let options = [];
 	cells.sort((a, b) => b.length - a.length).forEach(cell => {	
 		console.log('\tsquiggle in cell with', cell[0]);
@@ -44,10 +44,37 @@ const conserveSpaceMove = (state, snk) => {
 		}));
 	});
 
-	//	XXX: Look at walls.
-	let best = options.sort((a, b) => b.path.length - a.path.length)[0] || null;
+	//	Discover best option.
+	let bestEscape = null, bestSpace = null;
+	options.forEach(opt => {
+		let {path, walls} = opt;
+		//	Check for space.
+		if (!bestSpace || (path.length > bestSpace.path.length)) bestSpace = opt;
+
+		//	Check for escape.
+		let isEscape = false;
+		walls.forEach(({tid, pt}) => {
+			//	That's the board edge or we already figured this out.
+			if ((tid === true) || isEscape) return;
+
+			let snake = state.snakeMap[tid],
+				segI = snake.bodyMap[keyable(pt)];
+			//	Check if this will be gone after running this path.
+			if ((snake.body.length - segI) < path.length) isEscape = true;
+		});
+
+		//	If this is the longest escape path found yet use.
+		//	XXX: Agro variant prefer shorter?
+		if (isEscape && (!bestEscape || (path.length > bestEscape.path.length))) bestEscape = opt;
+	});
+	console.log('\tescape is', bestEscape && bestEscape.path);
+	console.log('\tpacking opt is', bestSpace && bestSpace.path);
+	//	Select our best bet, prefering escape.
+	let best = bestEscape || bestSpace;
+	
+	//	Finish.
 	if (best) {
-		console.log('best save sz / cell sz', best.path.length, best.cell.length);
+		console.log('selected escape / len / cell sz', !!bestEscape, best.path.length, best.cell.length);
 		return directionTo(snk.head, best.path[0]);
 	}
 	else {

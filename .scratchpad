@@ -1,7 +1,4 @@
 current:
-* cell space optimization shouldn't be dangerous if it doesn't have to
-* squiggles can be non-optimal in weirdly shaped spaces
-* cell tail segment wall handling
 
 https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Bridge-finding_algorithm
 
@@ -17,3 +14,7 @@ misc:
 * cells with tail segment walls should be prefered
 * food in 1-wide cells should be ignored?
 * !!! going for food greedily is naive
+* cell space optimization shouldn't be dangerous if it doesn't have to
+* squiggles can be non-optimal in weirdly shaped spaces
+* starvation emergency handling
+* moving into a cell while favoring tails can lead to starvation
