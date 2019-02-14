@@ -1,0 +1,75 @@
+//	A datastructure used to skip considering paths that have duplicate starts,
+			//	given that one has been found that is sufficiently large.
+			o_earlyDones = {};
+
+		console.log('\tbegin ocp', snk.head, cellMap);
+		/** The key for the root of the path in the "early dones" data structure. */
+		const o_rootKey = p => keyable(p[0]) + 'a' + keyable(p[1]);
+		/** The DFS search node visit. */
+		const visit = (a, path=null, pathMap=null) => {
+			//	Extend path.
+			if (!path) path = [];
+			else {
+				path.push(a);
+				//	Base case - a similar path has already been found.
+				if (path.length > 2 && o_earlyDones[o_rootKey(path)]) return;
+			}
+			pathMap = {...(pathMap || {}), [keyable(a)]: true};
+
+			//	Get all unvisited neighbors in the cell.
+			let neighbors = this.safeNeighbors(a, this.dangerousOccupationMx).filter(b => (
+				cellMap[keyable(b)] && !pathMap[keyable(b)]
+			));
+			//	Base case - this path won't work.
+			if (neighbors.length == 0) {
+				found.push(path);
+				return;
+			}
+			//	Base case - this path is complete.
+			if (path.length == snk.body.length) {
+				found.push(path);
+				o_earlyDones[o_rootKey(path)] = true;
+				return;
+			}
+
+			//	Step DFS.
+			neighbors.forEach(n => visit(n, [...path], {...pathMap}));
+		};
+
+		//	Run search.
+		visit(snk.head);
+		console.log('\tocp fnd', found);
+		let result = found.sort((a, b) => b.length - a.length)[0];
+		console.log('\tend ocp | best', result.length, 'vs', cell.length);
+		return result;
+
+
+
+		headPositionPsAfterTurns(game, n, rootP=1.0) {
+		//	Point-visit logic. Returns an array.
+		const visit = (pt, m, rp) => {
+			if (m == 0) return [];
+
+			//	Compute neighbors.
+			let neighbors = game.safeNeighbors(pt), pHere = rp/neighbors.length;
+			//	Maybe done. Note there's never repeats here.
+			if (m == 1) return neighbors.map(ne => { return {tile: ne, p: pHere}; });
+
+			//	Step out then collate repeats since this could create duplicates.
+			let map = {};
+			flatten(neighbors.map(ne => visit(ne, m - 1, pHere))).forEach(({tile, p}) => {
+				let nk = keyable(tile);
+				map[nk] = map[nk] || 0;
+				map[nk] += p;
+			});
+
+			//	Return result.
+			return listify(map).map(pt => { return {tile: pt, p: map[keyable(pt)]}; });	
+		}
+
+		//	Compute and phrase as a matrix.
+		let mx = createMat(game.size, () => 0);
+		visit(this.head, n, rootP).forEach(({tile: {x, y}, p}) => mx[y][x] += p);
+
+		return mx;
+	}

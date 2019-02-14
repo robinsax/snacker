@@ -105,12 +105,56 @@ const directionTo = (from, to) => shuffle(MOVE_OPS).filter(([cond, ...t]) => (
 	cond(from, to)
 )).map(([t, res]) => res)[0] || null;
 
+//	Squiggling utils.
+
+//	Squiggle options.
+const SQUIGGLE_OPTS = [
+	[north, west, south, east],
+	[north, east, south, west],
+	[south, west, north, east],
+	[south, east, north, west]
+];
+
+/**
+*	Create and return the paths for each possible squiggle in the given cell.  
+*/
+const createSquigglesIn = (pt, cell) => {
+	//	Setup.
+	let cellMap = mapify(cell), paths = [];
+	/** Curry a function that will return a point if a move to it is possible.  */
+	const createStepFn = dFn => (pt, pathMap) => {
+		let chk = dFn(pt), k = keyable(chk);
+		if (cellMap[k] && !pathMap[k]) return chk;
+		return null;
+	};
+
+	shuffle(SQUIGGLE_OPTS).map(opt => opt.map(createStepFn)).map(stepSeq => {
+		let path = [], pathMap = {}, cur = pt;
+		while (cur) {
+			let next = null;
+			stepSeq.forEach(stepFn => {
+				if (next) return;
+				next = stepFn(cur, pathMap);
+			});
+			if (next) {
+				path.push(next);
+				pathMap[keyable(next)] = true;
+			};
+			cur = next;
+		}
+		paths.push(path);
+	});
+
+	return paths;
+};
+
 //	Objects.
 
 /** Snake comprehension with utilities. */
 class Snake {
 	constructor({body, health, id}, i, self) {
 		this.body = body;
+		this.bodyMap = mapify(body);
 		this.health = health;
 		this.self = self;
 		this.id = id;
@@ -125,35 +169,6 @@ class Snake {
 		let trim = this.body.length - moves.length;
 		return [...moves, ...this.body.filter((p, i) => i < trim)];
 	}
-	
-	/*headPositionPsAfterTurns(game, n, rootP=1.0) {
-		//	Point-visit logic. Returns an array.
-		const visit = (pt, m, rp) => {
-			if (m == 0) return [];
-
-			//	Compute neighbors.
-			let neighbors = game.safeNeighbors(pt), pHere = rp/neighbors.length;
-			//	Maybe done. Note there's never repeats here.
-			if (m == 1) return neighbors.map(ne => { return {tile: ne, p: pHere}; });
-
-			//	Step out then collate repeats since this could create duplicates.
-			let map = {};
-			flatten(neighbors.map(ne => visit(ne, m - 1, pHere))).forEach(({tile, p}) => {
-				let nk = keyable(tile);
-				map[nk] = map[nk] || 0;
-				map[nk] += p;
-			});
-
-			//	Return result.
-			return listify(map).map(pt => { return {tile: pt, p: map[keyable(pt)]}; });	
-		}
-
-		//	Compute and phrase as a matrix.
-		let mx = createMat(game.size, () => 0);
-		visit(this.head, n, rootP).forEach(({tile: {x, y}, p}) => mx[y][x] += p);
-
-		return mx;
-	}*/
 
 	get head() { return this.body[0]; }
 }
@@ -166,6 +181,10 @@ class GameState {
 		this.opponents = this.snakes.filter(s => !s.self);
 		this.self = this.snakes.filter(s => s.self)[0];
 		this.turn = turn;
+
+		//	Construct index, snake map for constant lookup.
+		this.snakeMap = {};
+		this.snakes.forEach(s => this.snakeMap[s.i] = s);
 		
 		//	Sort food.
 		this.food = food.sort((a, b) => (
@@ -179,7 +198,7 @@ class GameState {
 		this.snakes.forEach(s => {
 			//	Add snake to occupation matrix, excluding it's tail segment if it
 			//	definitely can't expand on the next move.
-			let nearFood = this.allNeighbors(s.head).filter(a => this.foodMap[keyable(a)]).length == 0;
+			let nearFood = this.allNeighbors(s.head).filter(a => this.foodMap[keyable(a)]).length > 0;
 			s.body.forEach(({x, y}, i) => {
 				if (nearFood || (i < s.body.length - 1)) this.occupationMx[y][x] = s.i;
 			});
@@ -190,9 +209,6 @@ class GameState {
 		this.opponents.forEach(o => (
 			this.safeNeighbors(o.head).forEach(({x, y}) => this.occupationMx[y][x] = o.i)
 		));
-
-		//	Optimization data structures.
-		this.o_cellAtMap = {};
 	}
 	
 	/** Return the to-be-saved representation of this state. */
@@ -201,13 +217,13 @@ class GameState {
 	}
 	
 	/** Return all on-board neighboring points to the given point. */
-	allNeighbors({x, y}) {
+	allNeighbors({x, y}, trimToBoard=true) {
 		let {width, height} = this.size; 
 		return [
-			(x < (width - 1)) && {x: x + 1, y},
-			(x > 0) && {x: x - 1, y},
-			(y < (height - 1)) && {x, y: y + 1},
-			(y > 0) && {x, y: y - 1}
+			(!trimToBoard || (x < (width - 1))) && {x: x + 1, y},
+			(!trimToBoard || (x > 0)) && {x: x - 1, y},
+			(!trimToBoard || (y < (height - 1))) && {x, y: y + 1},
+			(!trimToBoard || (y > 0)) && {x, y: y - 1}
 		].filter(a => a !== false); 
 	}
 
@@ -227,9 +243,6 @@ class GameState {
 	*/
 	cellAt(pt, mx=null, ar=null, lkup=null) {
 		mx = mx || this.occupationMx;
-		//	Check map.
-		let ptK = keyable(pt);
-		if (this.o_cellAtMap[ptK]) return this.o_cellAtMap[ptK];
 
 		//	Populate defaults.
 		ar = ar || [];
@@ -245,8 +258,30 @@ class GameState {
 		//	Recurse.
 		neighbors.forEach(n => ar = this.cellAt(n, mx, ar, lkup));
 	
-		this.o_cellAtMap[ptK] = ar;
 		return ar;
+	}
+
+	/**
+	*	Compute the cell walls for the given cell, returning a map where values are
+	*	the snake indicies or `true` for the board edge. 
+	*
+	*	XXX: Naive.
+	*/
+	cellWallsFor(cell) {
+		let wallMap = {}, cellMap = mapify(cell),
+			{width, height} = this.size;
+
+		cell.forEach(pt => {
+			this.allNeighbors(pt, false).forEach(n => {
+				let k = keyable(n);
+				if (cellMap[k] || wallMap[k]) return;
+
+				if (n.x < 0 || n.x >= width || n.y < 0 || n.y >= height) wallMap[k] = true;
+				else wallMap[k] = this.dangerousOccupationMx[n.y][n.x];
+			});
+		});
+
+		return wallMap;
 	}
 
 	/** Run A* pathfinding between two points. */
@@ -299,10 +334,18 @@ class GameState {
 	}
 
 	/** Return a string representation of this state. TODO: Unfinished. */
-	repr() {
-		let lines = ['--- turn ' + this.turn + (this instanceof FutureGameState ? ' (future)' : '') + ' ---'];
-	
-		return lines.join('\n');
+	show(overlayList=null, overlayMap=null) {
+		let mx = createMat(this.size, () => '.');
+		this.snakes.forEach(s => {
+			s.body.forEach(({x, y}) => mx[y][x] = s.i);
+		});
+		this.food.forEach(({x, y}) => mx[y][x] = 'f');
+		if (overlayList) overlayList.forEach(({x, y}) => mx[y][x] = 'a');
+		if (overlayMap) Object.keys(overlayMap).map(k => (
+			[overlayMap[k], unkey(k)]
+		)).forEach(([v, {x, y}]) => mx[y][x] = v);
+
+		return '--- turn ' + this.turn + ' ---\n' + mx.map(r => r.join(' ')).join('\n');
 	}
 }
 
@@ -311,5 +354,5 @@ module.exports = {
 	directionTo, rectilinearDistance,
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
-	showMat, GameState, Snake
+	createSquigglesIn, showMat, GameState, Snake
 };
