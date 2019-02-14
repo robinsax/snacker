@@ -48,6 +48,8 @@ const createMat = ({width, height}, initCellVal) => {
 
 	return mx;
 };
+/** Return a string representation of a matrix. */
+const matToStr = mx => mx.map(r => r.join(' ')).join('\n');
 
 /** Move point north once. */
 const north = ({x, y}) => { return {x, y: y - 1}; };
@@ -112,7 +114,11 @@ const SQUIGGLE_OPTS = [
 	[north, west, south, east],
 	[north, east, south, west],
 	[south, west, north, east],
-	[south, east, north, west]
+	[south, east, north, west],
+	[west, north, east, south],
+	[west, south, east, north],
+	[east, north, west, south],
+	[east, south, west, north]
 ];
 
 /**
@@ -146,6 +152,19 @@ const createSquigglesIn = (pt, cell) => {
 	});
 
 	return paths;
+};
+
+/** 
+*	Return whether or not the given cell (list or map) contains one of the 
+*	given points. 
+*/
+const cellContainsOneOf = (cell, pts) => {
+	if (cell instanceof Array) cell = mapify(cell);
+
+	for (let i = 0; i < pts.length; i++) {
+		if (cell[keyable(pts[i])]) return true;
+	}
+	return false;
 };
 
 //	Objects.
@@ -212,6 +231,11 @@ class GameState {
 		this.opponents.forEach(o => (
 			this.safeNeighbors(o.head).forEach(({x, y}) => this.occupationMx[y][x] = o.i)
 		));
+
+		//	Compute choke map.
+		let {matrix, valueMap} = this.computeChokeMap();
+		this.chokeMap = matrix;
+		this.chokeValueMap = valueMap;
 	}
 	
 	/** Return the to-be-saved representation of this state. */
@@ -248,8 +272,9 @@ class GameState {
 		mx = mx || this.occupationMx;
 
 		//	Populate defaults.
-		ar = ar || [];
-		lkup = lkup || {};
+		//	XXX: Modified to include initial... does this fuck things up?
+		ar = ar || [pt];
+		lkup = lkup || {[keyable(pt)]: true};
 	
 		//	Find neighbors not already visited.
 		let neighbors = this.safeNeighbors(pt, mx).filter(a => !lkup[keyable(a)]);
@@ -288,20 +313,26 @@ class GameState {
 	}
 
 	/** Run A* pathfinding between two points. */
-	aStarTo(from, to, ext=null) {
+	aStarTo(from, to, ext=null, heur=null) {
+		heur = heur || rectilinearDistance;
+		//	Setup helpers.
 		const xyToNode = ({ x, y }) => [x, y],
 			nodeToXY = ([x, y]) => { return {x, y}; };
+
+		//	Build board mx.
 		let mx = this.occupationMx;
 		if (ext) {
 			mx = mx.map(a => [...a]);
 			ext.forEach(({x, y}) => mx[y][x] = true);
 		}
 
+		//	Run.
+		//	XXX: Timeout?
 		let { status, path } = aStar({
 			start: xyToNode(from),
 			isEnd: ([x, y]) => equal(to, {x, y}),
 			distance: (a, b) => rectilinearDistance(nodeToXY(a), nodeToXY(b)),
-			heuristic: a => rectilinearDistance(nodeToXY(a), to),
+			heuristic: a => heur(nodeToXY(a), to),
 			neighbor: a => this.safeNeighbors(nodeToXY(a), mx).map(xyToNode)
 		});
 
@@ -311,29 +342,37 @@ class GameState {
 	
 	/** Compute the choke matrix for this state. */
 	computeChokeMap() {
-		let mx = createMat(this.size, () => 0);
+		let mx = createMat(this.size, () => 0), vMap = {};
+	
 		//	Boundary expansion.
 		const pushFront = (s, k=0, lkup=null) => {
 			//	Base case.
 			if (s.length == 0) return;
 			lkup = lkup || {};
+			vMap[k] = s;
 	
 			//	Propagate out.
-			let next = [];
+			let next = [], nextMap = {};
 			s.forEach(pt => {
 				mx[pt.y][pt.x] = mx[pt.y][pt.x] || k;
+
 				lkup[keyable(pt)] = true;
-				next = next.concat(this.safeNeighbors(pt));
+
+				let set = this.safeNeighbors(pt).filter(a => !nextMap[keyable(a)]);
+				nextMap = {...nextMap, ...mapify(set)};
+				next = next.concat(set);
 			});
 			//	Reduce to unvisited.
 			next = next.filter(a => !lkup[keyable(a)]);
 	
 			pushFront(next, k + 1, lkup);
 		};
+		let all = [];
+		this.snakes.forEach(s => all = all.concat(s.body));
 		//	Propagate matrix updates.
-		pushFront(walls);
+		pushFront(all);
 	
-		return mx;
+		return {matrix: mx, valueMap: vMap};
 	}
 
 	/** Return a string representation of this state. TODO: Unfinished. */
@@ -348,7 +387,7 @@ class GameState {
 			[overlayMap[k], unkey(k)]
 		)).forEach(([v, {x, y}]) => mx[y][x] = v);
 
-		return '--- turn ' + this.turn + ' ---\n' + mx.map(r => r.join(' ')).join('\n');
+		return '--- turn ' + this.turn + ' ---\n' + matToStr(mx);
 	}
 }
 
@@ -357,5 +396,6 @@ module.exports = {
 	directionTo, rectilinearDistance,
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
-	createSquigglesIn, showMat, GameState, Snake
+	createSquigglesIn, showMat, cellContainsOneOf, matToStr,
+	GameState, Snake
 };

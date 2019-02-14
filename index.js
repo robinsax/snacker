@@ -32,10 +32,10 @@ app.post('/start', (req, resp) => {
 });
 
 app.post('/move', errorLogged((req, resp) => {
-	let {game: {id}} = req.body,
-		{turn} = stateStorage[id];
+	let {game: {id}} = req.body, stateStore = (stateStorage[id] || {turn: 0}),
+		{turn} = stateStore;
 	console.log('begin turn ' + turn);
-	let {move, state} = computeMove(req.body, stateStorage[id], +mode);
+	let {move, state} = computeMove(req.body, stateStore, +mode);
 
 	stateStorage[id] = {...state, turn: turn + 1};
 	console.log('move', move); 
@@ -47,7 +47,7 @@ app.post('/end', (req, resp) => {
 	console.log('end game', id);
 	delete stateStorage[id];
 	
-	return resp.json({})
+	return resp.json({});
 });
 
 app.post('/ping', (request, response) => {

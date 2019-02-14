@@ -1,20 +1,19 @@
-current:
-
-https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Bridge-finding_algorithm
+current:		
+* don't go near walls
+* carefully space optimize first
+* choke map is general heuristic for future danger attention mechanism
 
 misc:
-* don't go near walls
 * going into a cell inclosed by self can predicably = certain death
-* consider it dangerous to move toward another snake's head (that's where unpredicability happens)
-* prefer destinations with maximal choke-map values as a general heuristic against sticky situations
 * attack by minimizing choke map values at opponent head
 * space optimization improvements
-* prefer cells without opponents heads in them
-* something about own tail not contributing to cell size
-* cells with tail segment walls should be prefered
 * food in 1-wide cells should be ignored?
 * !!! going for food greedily is naive
-* cell space optimization shouldn't be dangerous if it doesn't have to
-* squiggles can be non-optimal in weirdly shaped spaces
 * starvation emergency handling
-* moving into a cell while favoring tails can lead to starvation
+* consider it dangerous to move toward another snake's head (that's where unpredicability happens)
+
+strats:
+* prefer destinations with maximal choke-map values as a general heuristic against sticky situations
+
+algos:
+* https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Bridge-finding_algorithm
