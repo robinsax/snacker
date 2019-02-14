@@ -2,6 +2,8 @@
 
 *WIP, I'm mostly building out utilities at the moment*.
 
+*Records: Turn 821 solo, Turn 523 vs. a variant of self*.
+
 ## Packaging
 
 * `brain.js` does high level strategy
@@ -24,9 +26,10 @@ Non-trivial algorithms included so far:
 * A* - go-to for pathfinding, I just wrapped the `a-star` npm package for now
 * Cell detection - DFS "cell" detection. Cells are areas of the board enclosed 
 	by snake bodies
-* Future position probabilility - A naive algorithm for predicting future 
-	opponent snake position. For now, it assumes the probability of move direction
-	is evenly distributed, but that the snake won't move into walls
+* Squiggle-powered spacial optimization - Heuristically optimizes the presence of a snake in
+	a given cell by trying a variety of squiggle patterns. Also considers whether the
+	snake segments at each potential end position will be gone upon being reached. True
+	optimization has too high a time-space complexity, even when using eager DFS.
 * "Choke matrix" generation - Generates a board matrix where each cells value is
 	it's distance from a tile containing a snake body. Will be used for local choke
 	point search to detect opponent trapping opportunies.
