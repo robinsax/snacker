@@ -5,6 +5,10 @@ const {
 } = require('./handlers.js');
 const { computeMove } = require('./brain.js');
 
+const COLORS = [
+	null, '#000000', '#aaffaa'
+];
+
 const errorLogged = fn => (...args) => {
 	try {
 		return fn(...args);
@@ -15,7 +19,7 @@ const errorLogged = fn => (...args) => {
 		throw ex;
 	}
 };
-const mode = process.env.MODE;
+const mode = +process.env.MODE;
 const stateStorage = {};
 
 app.set('port', (process.env.PORT || 9001));
@@ -28,18 +32,21 @@ app.post('/start', (req, resp) => {
 	console.log('start game', id);
 	stateStorage[id] = {turn: 0};
 
-	return resp.json({});
+	return resp.json({color: COLORS[mode]});
 });
 
 app.post('/move', errorLogged((req, resp) => {
 	let {game: {id}} = req.body, stateStore = (stateStorage[id] || {turn: 0}),
 		{turn} = stateStore;
 	console.log('begin turn ' + turn);
-	let {move, state} = computeMove(req.body, stateStore, +mode);
 
+	let {move, state, taunt} = computeMove(req.body, stateStore, mode),
+		payload = {move};
+	if (taunt) payload.taunt = taunt;
 	stateStorage[id] = {...state, turn: turn + 1};
-	console.log('move', move); 
-	return resp.json({ move });
+
+	console.log('move', move, 'taunt', taunt); 
+	return resp.json(payload);
 }));
 
 app.post('/end', (req, resp) => {

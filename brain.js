@@ -5,8 +5,8 @@ const {
 } = require('./utils.js');
 
 //	Mode constants.
-const AGRO = 1;
-const SAFE = 2;
+const ALPHA = 1; // XXX: Agro.
+const OMEGA = 2; // XXX: Cautious.
 
 /**
 *	Compute a triage move to conserve space.
@@ -54,7 +54,7 @@ const conserveSpaceMove = (state, snk) => {
 		//	Check for opponent heads.
 		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(({body: [head, ...x]}) => head));
 		//	Collect factors.
-		let factors = [hasFood, path.length, !hasOpponentHeads];
+		let factors = [hasFood, path.length, !hasOpponentHeads, !hasOpponentHeads];
 
 		//	Check for space.
 		if (!bestSpace || factors.filter((a, i) => a > bestSpcFactors[i]).length > 2) {
@@ -106,10 +106,18 @@ const conserveSpaceMove = (state, snk) => {
 	}
 };
 
-/** Compute a move to a point with safety checks. */
-const safeMove = (snk, to, state, cells=null, stops=null, heur=null) => {
+/**
+*	Compute a move to a point with safety checks. 
+*
+*	XXX: Isn't consistant for prediction because behaviour depends on snake mode.
+*/
+const safeMove = (snk, to, state, cells=null, stops=null) => {
 	//	Compute a path to that food.
-	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), heur);
+	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (
+		state.selfMode == OMEGA && ((a, b) => (
+			rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
+		))
+	));
 	if (!path) return null;
 
 	//	Check if trap and try to avoid.
@@ -175,13 +183,49 @@ const foodMoveCareful = state => {
 	return move;
 };
 
+/** 
+*	Compute a probably successful attack move.
+*
+* 	XXX: snk must be self because of opponent hardcoding and occupation mx lookahead.
+*/
+const computeAttackMove = (snk, state) => {
+	let move = null;
+	console.log('attack check', state.opponents.length);
+
+	state.opponents.forEach(op => {
+		if (move) return;
+
+		if (snk.body.length > op.body.length) {
+			//	Try and head over to a possible next move.
+			//	XXX: nearest is naive.
+			let targetable = state.safeNeighbors(op.head).sort((a, b) => (
+				rectilinearDistance(a, snk.head) - rectilinearDistance(b, snk.head)
+			));
+			console.log('\tchk snk / targ', op.i, targetable);
+			if (!targetable.length) return;
+
+			move = safeMove(snk, targetable[0], state);
+			console.log('\tattack to snake / move fnd', op.i, move);
+		}
+	});
+
+	if (move) console.log('\tconfirmed');
+	return move;
+}
+
 /** Compute the move for the given request. */
 const computeMove = (data, lastState, mode) => {
 	let state = new GameState(data, lastState), move = null;
-	const wrap = m => { return {move: m, state: state.save()}; };
+	state.selfMode = mode; // XXX: Lazy hack to expand mode scope.
+	const wrap = (move, taunt=null) => { 
+		return {
+			move, taunt, 
+			state: state.save()
+		};
+	};
 
 	//	Maybe chill.
-	if (mode == SAFE && state.self.health > 60) {
+	if (mode == OMEGA && state.self.health > 60) {
 		console.log('finna chill?');
 		//	Find the points of minimum choke and try to move toward one.
 		let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
@@ -196,27 +240,32 @@ const computeMove = (data, lastState, mode) => {
 
 		if (move) {
 			console.log('\tconfirmed chill');
-			return wrap(move);
+			return wrap(move, 'relaxin');
 		}
 		else console.log('\twoah, nvm');
 	}
+	//	Maybe attack.
+	if (mode == ALPHA && state.self.health > 20) {
+		move = computeAttackMove(state.self, state);
+		if (move) return wrap(move, 'sick em');
+	}
 
 	//	Maybe get some food.
-	move = (mode == AGRO ? foodMoveAggressive : foodMoveCareful)(state);
-	if (move) return wrap(move);
+	move = (mode == ALPHA ? foodMoveAggressive : foodMoveCareful)(state);
+	if (move) return wrap(move, 'chow time');
 
 	//	Try to conserve space.
 	move = conserveSpaceMove(state, state.self);
-	if (move) return wrap(move);
+	if (move) return wrap(move, 'sticky situation!');
 
 	let open = state.safeNeighbors(state.self.head, state.dangerousOccupationMx)[0];
 	if (open) {
 		console.log('buying time at', open);
-		return wrap(directionTo(state.self.head, open));
+		return wrap(directionTo(state.self.head, open), '*worried slither*');
 	}
 
 	console.log('sorry, i suck');
-	return wrap('left');
+	return wrap('left', 'gg wp');
 };
 
 module.exports = { conserveSpaceMove, computeMove };

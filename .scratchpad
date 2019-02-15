@@ -1,16 +1,16 @@
 current:		
-* don't go near walls
+* rethink cautious methodology 
+	* to select cell without opponents for late game
+	* to detect being chased and deploy counter-measures
+	* don't go near walls
 * carefully space optimize first
 * choke map is general heuristic for future danger attention mechanism
 
 misc:
 * going into a cell inclosed by self can predicably = certain death
 * attack by minimizing choke map values at opponent head
-* space optimization improvements
 * food in 1-wide cells should be ignored?
-* !!! going for food greedily is naive
 * starvation emergency handling
-* consider it dangerous to move toward another snake's head (that's where unpredicability happens)
 
 strats:
 * prefer destinations with maximal choke-map values as a general heuristic against sticky situations

@@ -221,16 +221,18 @@ class GameState {
 			//	Add snake to occupation matrix, excluding it's tail segment if it
 			//	definitely can't expand on the next move.
 			let nearFood = this.allNeighbors(s.head).filter(a => this.foodMap[keyable(a)]).length > 0;
+			console.log('\tsnake-nalysis k / f / s', s.i, nearFood);
 			s.body.forEach(({x, y}, i) => {
 				if (nearFood || (i < s.body.length - 1)) this.occupationMx[y][x] = s.i;
 			});
 		});
 		//	Save "dangerous" version to be used in triage.
 		this.dangerousOccupationMx = this.occupationMx.map(a => [...a]);
-		//	Add opponent next-move avoidance.
-		this.opponents.forEach(o => (
+		//	Add opponent next-move avoidance for larger snakes.
+		this.opponents.filter(o => o.body.length >= this.self.body.length).forEach(o => (
 			this.safeNeighbors(o.head).forEach(({x, y}) => this.occupationMx[y][x] = o.i)
 		));
+		console.log(this.show());
 
 		//	Compute choke map.
 		let {matrix, valueMap} = this.computeChokeMap();
@@ -313,14 +315,14 @@ class GameState {
 	}
 
 	/** Run A* pathfinding between two points. */
-	aStarTo(from, to, ext=null, heur=null) {
+	aStarTo(from, to, ext=null, heur=null, mx=null) {
 		heur = heur || rectilinearDistance;
 		//	Setup helpers.
 		const xyToNode = ({ x, y }) => [x, y],
 			nodeToXY = ([x, y]) => { return {x, y}; };
 
 		//	Build board mx.
-		let mx = this.occupationMx;
+		mx = mx || this.occupationMx;
 		if (ext) {
 			mx = mx.map(a => [...a]);
 			ext.forEach(({x, y}) => mx[y][x] = true);
