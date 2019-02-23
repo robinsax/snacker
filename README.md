@@ -1,8 +1,15 @@
-# Robin's "snacker" snake
+# snacker
 
-*WIP, I'm mostly building out utilities at the moment*.
+*WIP*
 
-*Records (on 15^2 board): Turn 1289 solo, Turn 523 vs. a variant of self*.
+## Usage
+
+```bash
+git clone https://github.com/robinsax/snacker.git
+cd snacker
+npm i
+npm start
+```
 
 ## Packaging
 
