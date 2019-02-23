@@ -1,19 +1,7 @@
-current:		
-* rethink cautious methodology 
-	* to select cell without opponents for late game
-	* to detect being chased and deploy counter-measures
-	* don't go near walls
-* carefully space optimize first
-* choke map is general heuristic for future danger attention mechanism
+notes on alpha:
+* sometimes aggression is too risky -> use choke map
+* walls r bad!
 
-misc:
-* going into a cell inclosed by self can predicably = certain death
-* attack by minimizing choke map values at opponent head
-* food in 1-wide cells should be ignored?
-* starvation emergency handling
-
-strats:
-* prefer destinations with maximal choke-map values as a general heuristic against sticky situations
-
-algos:
-* https://en.wikipedia.org/wiki/Bridge_(graph_theory)#Bridge-finding_algorithm
+notes on omega:
+* good escape, but what's the use case?
+* agros love to chase it... trick em?
