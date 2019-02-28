@@ -307,6 +307,10 @@ const computeMove = (data, lastState) => {
 	move = computeAttackMove(state.self, state);
 	if (move) return wrap(move, 'sick em');
 
+	//	Maybe eat.
+	move = foodMoveAggressive(state);
+	if (move) return wrap(move, 'chow time');
+
 	//	Maybe escape.
 	move = escapeHeadsMove(state);
 	if (move) return wrap(move, 'back off');
