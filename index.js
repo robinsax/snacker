@@ -5,9 +5,7 @@ const {
 } = require('./handlers.js');
 const { computeMove } = require('./brain.js');
 
-const COLORS = [
-	null, '#000000', '#aaffaa'
-];
+const COLOR = '#A35B41';
 
 const errorLogged = fn => (...args) => {
 	try {
@@ -19,7 +17,6 @@ const errorLogged = fn => (...args) => {
 		throw ex;
 	}
 };
-const mode = +process.env.MODE;
 const stateStorage = {};
 
 app.set('port', (process.env.PORT || 9001));
@@ -32,7 +29,7 @@ app.post('/start', (req, resp) => {
 	console.log('start game', id);
 	stateStorage[id] = {turn: 0};
 
-	return resp.json({color: COLORS[mode]});
+	return resp.json({color: COLOR});
 });
 
 app.post('/move', errorLogged((req, resp) => {
@@ -40,7 +37,7 @@ app.post('/move', errorLogged((req, resp) => {
 		{turn} = stateStore;
 	console.log('begin turn ' + turn);
 
-	let {move, state, taunt} = computeMove(req.body, stateStore, mode),
+	let {move, state, taunt} = computeMove(req.body, stateStore),
 		payload = {move};
 	if (taunt) payload.taunt = taunt;
 	stateStorage[id] = {...state, turn: turn + 1};

@@ -25,7 +25,6 @@
     "node": ">=8.x"
   },
   "scripts": {
-    "start": "cross-env PORT=5005 MODE=1 nodemon index.js",
-    "start-2": "cross-env PORT=5001 MODE=2 nodemon index.js"
+    "start": "cross-env PORT=5005 nodemon index.js"
   }
 }

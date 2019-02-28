@@ -114,9 +114,9 @@ const conserveSpaceMove = (state, snk) => {
 const safeMove = (snk, to, state, cells=null, stops=null) => {
 	//	Compute a path to that food.
 	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (
-		state.selfMode == OMEGA && ((a, b) => (
+		(a, b) => (
 			rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
-		))
+		)
 	));
 	if (!path) return null;
 
@@ -147,6 +147,18 @@ const foodMoveAggressive = state => {
 	});
 	
 	return move;
+};
+
+/** Move to the food with the highest choke map value. */
+const foodMoveAvoidance = state => {
+	//	Order from greatest choke map value to least.
+	let ordered = state.food.map(pt => (
+		{pt, chk: state.chokeMap[pt.y][pt.x]}
+	)).sort((a, b) => (
+		b.chk - a.chk
+	));
+
+	return safeMove(state.self, ordered[0].pt, state);
 };
 
 /** Move to the nearest food in the safest cell. */
@@ -214,9 +226,8 @@ const computeAttackMove = (snk, state) => {
 }
 
 /** Compute the move for the given request. */
-const computeMove = (data, lastState, mode) => {
+const computeMove = (data, lastState) => {
 	let state = new GameState(data, lastState), move = null;
-	state.selfMode = mode; // XXX: Lazy hack to expand mode scope.
 	const wrap = (move, taunt=null) => { 
 		return {
 			move, taunt, 
@@ -224,6 +235,7 @@ const computeMove = (data, lastState, mode) => {
 		};
 	};
 
+	/*
 	//	Maybe chill.
 	if (mode == OMEGA && state.self.health > 60) {
 		console.log('finna chill?');
@@ -244,14 +256,24 @@ const computeMove = (data, lastState, mode) => {
 		}
 		else console.log('\twoah, nvm');
 	}
+	*/
+	if (state.opponents) {
+		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
+		if ((opsBySize[0].length - state.self.length) > 2) {
+			//	There's notably bigger snake, grow.
+			move = foodMoveAvoidance(state);
+			if (move) return wrap(move, 'catch up!');
+		}
+	}
+
 	//	Maybe attack.
-	if (mode == ALPHA && state.self.health > 20) {
+	if (state.self.health > 20) {
 		move = computeAttackMove(state.self, state);
 		if (move) return wrap(move, 'sick em');
 	}
 
 	//	Maybe get some food.
-	move = (mode == ALPHA ? foodMoveAggressive : foodMoveCareful)(state);
+	move = foodMoveAggressive(state);
 	if (move) return wrap(move, 'chow time');
 
 	//	Try to conserve space.

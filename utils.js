@@ -16,6 +16,12 @@ const MOVE_OPS = [
 /** Print a matrix. */
 const showMat = mx => mx.map(r => r.join('')).join('\n');
 
+/** Basic range to list function. */
+const range = (min, max) => {
+	let arr = [];
+	for (let k = min; k < max; k++) arr.push(k);
+	return arr;
+};
 /** Flatten an array of any depth. */
 const flatten = a => {
 	let result = [];
@@ -234,10 +240,15 @@ class GameState {
 		));
 		console.log(this.show());
 
+		//	Compute edge set.
+		this.allEdges = this.computeEdges();
+
 		//	Compute choke map.
 		let {matrix, valueMap} = this.computeChokeMap();
 		this.chokeMap = matrix;
 		this.chokeValueMap = valueMap;
+
+		console.log(matToStr(this.chokeMap));
 	}
 	
 	/** Return the to-be-saved representation of this state. */
@@ -341,6 +352,15 @@ class GameState {
 		if (status != 'success') return null;
 		return path.map(nodeToXY);
 	}
+
+	/** Compute the wall boundary cell set. */
+	computeEdges() {
+		let {width, height} = this.size;
+ 		return flatten([
+			range(0, width).map(x => ([{x, y: 0}, {x, y: height - 1}])),
+			range(0, height).map(y => ([{y, x: 0}, {y, x: width}]))
+		]);
+	}
 	
 	/** Compute the choke matrix for this state. */
 	computeChokeMap() {
@@ -369,8 +389,10 @@ class GameState {
 	
 			pushFront(next, k + 1, lkup);
 		};
-		let all = [];
-		this.snakes.forEach(s => all = all.concat(s.body));
+		let all = flatten([
+			this.allEdges,
+			this.snakes.map(({body}) => body)
+		]);
 		//	Propagate matrix updates.
 		pushFront(all);
 	
