@@ -102,8 +102,8 @@ const conserveSpaceMove = (state, snk) => {
 	
 	//	Finish.
 	if (best) {
-		console.log('selected', best.path[0]);
-		return directionTo(snk.head, best.path[0]);
+		console.log('selected', best[0]);
+		return directionTo(snk.head, best[0]);
 	}
 	else {
 		console.log('failed');
