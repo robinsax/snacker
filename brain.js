@@ -269,7 +269,7 @@ const computeMove = (data, lastState) => {
 	*/
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		if ((opsBySize[0].length - state.self.length) > 2) {
+		if ((opsBySize[0].length - state.self.body.length) > 2) {
 			//	There's notably bigger snake, grow.
 			move = foodMoveAggressive(state);
 			if (move) return wrap(move, 'catch up (agro)!');
