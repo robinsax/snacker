@@ -196,11 +196,16 @@ const safeMove = (snk, to, state, stops=null) => {
 };
 
 /** Move to the nearest food in a currently size-safe cell. */
-const foodMoveAggressive = state => {
+const foodMoveAggressive = (state, urgent=false) => {
 	console.log('\tfood agro get?');
-	let found = null;
+	let found = null, toCheck = state.food;
 
-	state.food.filter(f => !state.allEdgesMap[keyable(f)]).forEach(f => {
+	//	Avoid walls if we're not super hungry.
+	if (!urgent) toCheck = toCheck.filter(f => (
+		!state.allEdgesMap[keyable(f)]
+	));
+
+	toCheck.forEach(f => {
 		if (found && !found.further) return;
 
 		//	Skip moves to food that might put us near another snake.
@@ -355,8 +360,8 @@ const computeMove = (data, lastState) => {
 		needsToCatchUp = opsBySize[0].length > state.self.body.length;
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
 	}
-	if (needsToCatchUp || state.self.health < 20) {
-		move = foodMoveAggressive(state);
+	if (needsToCatchUp || state.self.health < 25) {
+		move = foodMoveAggressive(state, true);
 		if (move) return wrap(move, 'chow time');
 	} 
 
