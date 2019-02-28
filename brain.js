@@ -50,7 +50,7 @@ const conserveSpaceMove = (state, snk) => {
 		//	Check for opponent heads.
 		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(
 			({body: [head, ...x]}) => head)
-		);
+		) || (walls.filter(({tid}) => tid !== true).length > 0);
 		//	Check for escape.
 		let isEscape = false;
 		walls.forEach(({tid, pt}) => {
