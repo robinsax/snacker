@@ -257,7 +257,7 @@ const computeMove = (data, lastState) => {
 		else console.log('\twoah, nvm');
 	}
 	*/
-	if (state.opponents) {
+	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
 		if ((opsBySize[0].length - state.self.length) > 2) {
 			//	There's notably bigger snake, grow.
