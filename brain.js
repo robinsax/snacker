@@ -1,7 +1,8 @@
 /** High level thinking. */
 const {
 	GameState, directionTo, rectilinearDistance,
-	keyable, mapify, createSquigglesIn, cellContainsOneOf, isBeside
+	keyable, mapify, createSquigglesIn, cellContainsOneOf, isBeside,
+	listify
 } = require('./utils.js');
 
 //	Mode constants.
@@ -38,11 +39,9 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		options = options.concat(createSquigglesIn(snk.head, cell).filter(p => (
 			p.length > 0
 		)).map(path => {
-			let last = path[path.length - 1],
-				//	XXX: I N S A N E L Y unoptimized.
-				wallsMap = state.cellWallsFor(cell);
+			let wallsMap = state.cellWallsFor(cell); //	XXX: I N S A N E L Y unoptimized.
 
-			let walls = state.allNeighbors(last, false).map(n => {
+			let walls = listify(wallMap).map(n => {
 				return {tid: wallsMap[keyable(n)], pt: n};
 			}).filter(n => n.tid),
 				hasFood = cellContainsOneOf(cell, state.food);
@@ -132,7 +131,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		if (best) return;
 
 		best = fn(payload);
-		console.log('\tstage k', !!best);
+		console.log('\tstage k', k, !!best);
 	});
 	
 	//	Finish.
