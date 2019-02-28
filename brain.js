@@ -12,9 +12,9 @@ const OMEGA = 2; // XXX: Cautious.
 //	The stack of space conservation selectors.
 const SPACE_CONSERVE_SELECT_STAGES = [
 	({enh}) => enh,
-	({snh, s}) => (snh.length > s.body.length) && snh,
-	({eh, isDangerous}) => !isDangerous(eh) && eh,
-	({sh, s, isDangerous}) => !isDangerous(sh) && (sh.length > s.body.length) && sh,
+	({snh, s}) => snh && (snh.length > s.body.length) && snh,
+	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
+	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
 	({snh, eh, sh}) => snh || eh || sh
 ];
 
