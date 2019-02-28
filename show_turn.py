@@ -11,6 +11,6 @@ with open(fn) as f:
 
 found = list()
 for match in re.finditer(r'begin turn %s\n.*?\nmove .*?\n'%turn, log, re.DOTALL):
-	found.push(match)
+	found.append(match)
 
 print(found[-offs].group(0))
