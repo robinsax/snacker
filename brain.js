@@ -144,6 +144,7 @@ const safeMove = (snk, to, state, cells=null, stops=null) => {
 
 /** Move to the nearest food in a currently size-safe cell. */
 const foodMoveAggressive = state => {
+	console.log('\tfood agro get?');
 	let found = null;
 	state.food.forEach(f => {
 		if (found && !found.futher) return;
@@ -306,8 +307,8 @@ const computeMove = (data, lastState) => {
 	if (found && !found.futher && found.move) return wrap(found.move, 'chow time');
 
 	//	Maybe escape.
-	//move = backoffMove(state);
-	//if (move) return wrap(move, 'backing off');
+	move = backoffMove(state);
+	if (move) return wrap(move, 'backing off');
 
 	//	Try to conserve space.
 	move = conserveSpaceMove(state, state.self);
