@@ -216,7 +216,8 @@ const foodMoveCareful = state => {
 const backoffMove = state => {
 	console.log('backoff?');
 	//	Find the points of minimum choke and try to move toward one.
-	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
+	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0],
+		move;
 		
 	state.chokeValueMap[minChokeV].sort((a, b) => (
 		rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
@@ -228,7 +229,7 @@ const backoffMove = state => {
 
 	if (move) {
 		console.log('\tconfirmed chill');
-		return wrap(move, 'im goin over here');
+		return move;
 	}
 	else console.log('\twoah, nvm');
 }
