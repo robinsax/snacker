@@ -296,7 +296,8 @@ const computeMove = (data, lastState) => {
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		needsToCatchUp = (opsBySize[0].length - state.self.body.length) > 2;
+		needsToCatchUp = (opsBySize[0].length - state.self.body.length) > 1;
+		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
 	}
 	if (needsToCatchUp || state.self.health < 20) {
 		move = foodMoveAggressive(state);
