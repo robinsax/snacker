@@ -2,7 +2,7 @@ import re
 import sys
 
 fn, turn = sys.argv[1:3]
-offs = 0
+offs = 1
 if len(sys.argv) == 4:
 	offs = int(sys.argv[3])
 
