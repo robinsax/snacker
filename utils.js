@@ -95,7 +95,7 @@ const uniques = l => {
 /** Distance in N between points.  */
 const rectilinearDistance = (from, to) => Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 /** Point adjacency check. */
-const isBeside = (a, b) => ((Math.abs(a.x - b.x) < 2) && (Math.abs(a.y - b.y) < 2));
+const isBeside = (a, b) => ((Math.abs(a.x - b.x) + Math.abs(a.y - b.y)) < 2);
 /** Point equality check. */
 const equal = (a, b) => ((a.x == b.x) && (a.y == b.y));
 /** Point set equality. */
