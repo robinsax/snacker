@@ -308,7 +308,7 @@ const backoffMove = state => {
 		b.d - a.d
 	)).forEach(({pt, d}) => {
 		console.log('\t\tpt / dist', pt, d);
-		if (bestAvoid.d < d) bestAvoid = {pt, d};
+		if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d};
 	});
 	console.log('\tbest avoid is', bestAvoid);
 	if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
