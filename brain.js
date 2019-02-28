@@ -11,9 +11,9 @@ const OMEGA = 2; // XXX: Cautious.
 //	The stack of space conservation selectors.
 const SPACE_CONSERVE_SELECT_STAGES = [
 	({enh}) => enh,
-	({snh}, s) => (snh.length > s.body.length) && snh,
-	({eh}, s, isDangerous) => !isDangerous(eh) && eh,
-	({sh}, s, isDangerous) => !isDangerous(sh) && (snh.length > s.body.length) && sh,
+	({snh, s}) => (snh.length > s.body.length) && snh,
+	({eh, isDangerous}) => !isDangerous(eh) && eh,
+	({sh, s, isDangerous}) => !isDangerous(sh) && (snh.length > s.body.length) && sh,
 	({snh, eh, sh}) => snh || eh || sh
 ];
 
@@ -123,15 +123,15 @@ const conserveSpaceMove = (state, snk) => {
 	};
 
 	//	Select our best bet using the preference stack.
-	let best = null, payload = (
-		{enh: escapeNoHeads, eh: escapeHeads, snh: spaceNoHeads, sh: spaceHeads},
-		snk, isDangerous
-	);
+	let best = null, payload = {
+		enh: escapeNoHeads, eh: escapeHeads, snh: spaceNoHeads, sh: spaceHeads,
+		s: snk, isDangerous
+	};
 
 	SPACE_CONSERVE_SELECT_STAGES.forEach((fn, k) => {
 		if (best) return;
 
-		best = fn(...payload);
+		best = fn(payload);
 		console.log('\tstage k', !!best);
 	});
 	
