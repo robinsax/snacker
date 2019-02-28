@@ -41,7 +41,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		)).map(path => {
 			let wallsMap = state.cellWallsFor(cell); //	XXX: I N S A N E L Y unoptimized.
 
-			let walls = listify(wallMap).map(n => {
+			let walls = listify(wallsMap).map(n => {
 				return {tid: wallsMap[keyable(n)], pt: n};
 			}).filter(n => n.tid),
 				hasFood = cellContainsOneOf(cell, state.food);
