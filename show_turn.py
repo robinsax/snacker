@@ -8,6 +8,6 @@ with open(fn) as f:
 
 found = list()
 for match in re.finditer(r'begin turn %s\n.*?\nmove .*?\n'%turn, log, re.DOTALL):
-	found.append(match)
+	found.append(match.group(0))
 
 print('\n\n#########\n\n'.join(found))
