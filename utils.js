@@ -245,6 +245,7 @@ class GameState {
 
 		//	Compute edge set.
 		this.allEdges = this.computeEdges();
+		this.allEdgesMap = mapify(this.allEdges);
 
 		//	Compute choke map.
 		let {matrix, valueMap} = this.computeChokeMap();

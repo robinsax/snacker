@@ -306,6 +306,14 @@ const computeMove = (data, lastState) => {
 		};
 	};
 
+	//	Prioritize safety when against walls.
+	if (state.allEdgesMap[keyable(state.self.head)]) {
+		console.log('eek, im near the edge');
+		//	Try to conserve space.
+		move = conserveSpaceMove(state, state.self);
+		if (move) return wrap(move, 'i hate edges');
+	}
+
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
