@@ -51,8 +51,15 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	});
 
 	//	Gather opponent heads.
-	let opHeads = state.opponents.map(({head}) => head),
-		opHeadsMap = mapify(opHeads);
+	let opHeads = state.opponents.map(({head}) => head);
+	if (!dangerous) {
+		//	Expand head set with lookaheads.
+		opHeads = opHeads.concat(flatten(state.opponents.map(({head}) => (
+			state.safeNeighbors(head, state.dangerousOccupationMx)
+		))));
+	} 
+
+	let opHeadsMap = mapify(opHeads);
 
 	//	Discover best option.
 	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
@@ -63,6 +70,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		console.log('---- opt wall check ----', cell, path, walls);
 		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
 			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
+
 		//	Check for escape.
 		let isEscape = false;
 		walls.forEach(({tid, pt}) => {
