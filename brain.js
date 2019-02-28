@@ -124,6 +124,19 @@ const safeMove = (snk, to, state, stops=null) => {
 	));
 	if (!path) return null;
 
+	//	Check if trap and try to avoid.
+	let cell = state.cellAt(path[1]), cellSize = cell.length;
+	if (cellSize < snk.body.length) {
+		console.log('a* wants to trap me | would move', directionTo(snk.head, path[1]));
+		console.log('\tsl / stps', snk.body.length, stops);
+
+		//	Add stop so we can recompute.
+		stops = stops || [];
+		stops.push({pt: path[1], p: path, cs: cellSize});
+		//	Try again.
+		return safeMove(snk, to, state, stops);
+	}
+
 	//	Check if sticky and try to avoid.
 	let isSticky = false;
 	state.opponents.forEach(({head}) => {
@@ -138,21 +151,10 @@ const safeMove = (snk, to, state, stops=null) => {
 		//	Add to stops so we can recompute.
 		stops = stops || [];
 		stops.push({pt: path[1]});
-		//	Try again.
-		return safeMove(snk, to, state, stops)
-	}
-
-	//	Check if trap and try to avoid.
-	let cell = state.cellAt(path[1]), cellSize = cell.length;
-	if (cellSize < snk.body.length) {
-		console.log('a* wants to trap me | would move', directionTo(snk.head, path[1]));
-		console.log('\tsl / stps', snk.body.length, stops);
-
-		//	Add stop so we can recompute.
-		stops = stops || [];
-		stops.push({pt: path[1], p: path, cs: cellSize});
-		//	Try again.
-		return safeMove(snk, to, state, stops);
+		//	Try again, prefering result.
+		let retry = safeMove(snk, to, state, stops);
+		if (retry) return retry;
+		console.log('\tno way around it!');
 	}
 	
 	//	It's cool.
