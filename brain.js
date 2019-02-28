@@ -16,24 +16,19 @@ const OMEGA = 2; // XXX: Cautious.
 */
 const conserveSpaceMove = (state, snk) => {
 	let cells = [];
-	//	Find cells with safe access.
-	cells = state.safeNeighbors(snk.head).map(pt => (
-		state.cellAt(pt)
-	)).filter(c => c.length > snk.body.length);
-	console.log('conserving space | noc: ', cells.length, 'vs len', snk.body.length);
-	//	As a fallback find cells without safe access.
-	if (cells.length == 0) {
-		cells = state.safeNeighbors(snk.head, state.dangerousOccupationMx).map(pt => (
-			state.cellAt(pt, state.dangerousOccupationMx)
-		)).filter(c => c.length > 0);
-		console.log('\tno safe options, getting dangerous | noc: ' + cells.length);
-	}
+	//	Find all possible cells.
+	cells = state.safeNeighbors(snk.head, state.dangerousOccupationMx).map(pt => (
+		state.cellAt(pt, state.dangerousOccupationMx)
+	)).filter(c => c.length > 0);
+	console.log('conserve space option count:', cells.length, 'vs len', snk.body.length);
 
 	//	Collect optimizations in the found cells.
 	let options = [];
 	cells.sort((a, b) => b.length - a.length).forEach(cell => {	
 		console.log('\tsquiggle in cell with', cell[0]);
-		options = options.concat(createSquigglesIn(snk.head, cell).filter(p => p.length > 0).map(path => {
+		options = options.concat(createSquigglesIn(snk.head, cell).filter(p => (
+			p.length > 0
+		)).map(path => {
 			let last = path[path.length - 1],
 				//	XXX: I N S A N E L Y unoptimized.
 				wallsMap = state.cellWallsFor(cell);
@@ -48,20 +43,14 @@ const conserveSpaceMove = (state, snk) => {
 	});
 
 	//	Discover best option.
-	let bestEscape = null, bestEscFactors = null, bestSpace = null, bestSpcFactors = null;
+	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
 	options.forEach(opt => {
+		//	XXX: not using hasFood?
 		let {cell, path, walls, hasFood} = opt;
 		//	Check for opponent heads.
-		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(({body: [head, ...x]}) => head));
-		//	Collect factors.
-		let factors = [hasFood, path.length, !hasOpponentHeads, !hasOpponentHeads];
-
-		//	Check for space.
-		if (!bestSpace || factors.filter((a, i) => a > bestSpcFactors[i]).length > 2) {
-			bestSpcFactors = factors;
-			bestSpace = opt;
-		}
-
+		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(
+			({body: [head, ...x]}) => head)
+		);
 		//	Check for escape.
 		let isEscape = false;
 		walls.forEach(({tid, pt}) => {
@@ -75,29 +64,45 @@ const conserveSpaceMove = (state, snk) => {
 			//	XXX: No margin of error.
 			if ((snake.body.length - segI - 1) < path.length) isEscape = true;
 		});
-		if (!isEscape) return;
-		if (!bestEscape) {
-			console.log('\t\tfound first escape');
-			bestEscape = opt;
-			bestEscFactors = factors;
+		
+		//	Maybe assign to maxes.
+		console.log('\trun maxes for', opt.path[0]);
+		if (!hasOpponentHeads) {
+			if (isEscape) {
+				if (!escapeNoHeads || (escapeNoHeads.length < path.length)) {
+					console.log('\t\tesc no heads');
+					escapeNoHeads = path;
+				}
+			}
+			else {
+				if (!spaceNoHeads || (spaceNoHeads.length < path.length)) {
+					console.log('\t\tspace no heads');
+					spaceNoHeads = path;
+				}
+			}
 		}
 		else {
-			//	Check for improvements across > half of the factors.
-			console.log('\t\tesc factors / vs', factors, bestEscFactors);
-			if (factors.filter((a, i) => a > bestEscFactors[i]).length > 2) {
-				bestEscFactors = factors;
-				bestEscape = opt;
+			if (isEscape) {
+				if (!escapeHeads || (escapeHeads.length < path.length)) {
+					console.log('\t\tescape w/ heads');
+					escapeHeads = path;
+				}
+			}
+			else {
+				if (!spaceHeads || (spaceHeads.length < path.length)) {
+					console.log('\t\tspace w/ heads');
+					escapeHeads = path;
+				}
 			}
 		}
 	});
-	console.log('\tescape is', bestEscape && bestEscape.path);
-	console.log('\tpacking opt is', bestSpace && bestSpace.path);
 	//	Select our best bet, prefering escape.
-	let best = bestEscape || bestSpace;
+	//	XXX: naive, check dist to heads / sizes?
+	let best = escapeNoHeads || spaceNoHeads || spaceHeads || escapeHeads;
 	
 	//	Finish.
 	if (best) {
-		console.log('selected escape / len / cell sz', !!bestEscape, best.path.length, best.cell.length);
+		console.log('selected', best.path[0]);
 		return directionTo(snk.head, best.path[0]);
 	}
 	else {
@@ -208,6 +213,7 @@ const foodMoveCareful = state => {
 };
 
 /** Move away from opponent heads. */
+//	XXX: Doesn't do anything.
 const escapeHeadsMove = state => {
 	console.log('escape heads?');
 	let heads = state.opponents.map(({head}) => head);
