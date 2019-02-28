@@ -1,7 +1,7 @@
 import re
 import sys
 
-fn, turn = sys.argv[1:]
+fn, turn = sys.argv[1:3]
 offs = 0
 if len(sys.argv) == 4:
 	offs = int(sys.argv[3])
