@@ -295,6 +295,24 @@ const foodMoveCareful = state => {
 /** Move into open space. Pre-triage. */
 const backoffMove = state => {
 	console.log('backoff?');
+	//	First, if there's snakes nearby we want to move directly away.
+	let near = [];
+	state.opponents.forEach(({head}) => {
+		if (state.safeNeighbors(head, state.dangerousOccupationMx).filter(pt => (
+			isBeside(pt, state.self.head)
+		)).length > 0) near.push(head);
+	});
+	console.log('\tnear heads', near);
+	let bestAvoid = null;
+	near.map(pt => ({d: rectilinearDistance(pt, state.self.head), pt})).sort((a, b) => (
+		b.d - a.d
+	)).forEach(({pt, d}) => {
+		console.log('\t\tpt / dist', pt, d);
+		if (bestAvoid.d < d) bestAvoid = {pt, d};
+	});
+	console.log('\tbest avoid is', bestAvoid);
+	if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
+
 	//	Find the points of minimum choke and try to move toward one.
 	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0],
 		move;
