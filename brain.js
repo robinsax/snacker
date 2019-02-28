@@ -117,14 +117,30 @@ const conserveSpaceMove = (state, snk) => {
 *
 *	XXX: Isn't consistant for prediction because behaviour depends on snake mode.
 */
-const safeMove = (snk, to, state, cells=null, stops=null) => {
+const safeMove = (snk, to, state, stops=null) => {
 	//	Compute a path to that food.
-	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (
-		(a, b) => (
-			rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
-		)
+	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (a, b) => (
+		rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
 	));
 	if (!path) return null;
+
+	//	Check if sticky and try to avoid.
+	let isSticky = false;
+	state.opponents.forEach(({head}) => {
+		if (isSticky) return;
+		state.allNeighbors(head).forEach(pt => {
+			if (isBeside(pt, path[1])) isSticky = true;
+		});
+	});
+	if (isSticky) {
+		console.log('a* wants to get sticky | would move', directionTo(snk.head, path[1]));
+		
+		//	Add to stops so we can recompute.
+		stops = stops || [];
+		stops.push({pt: path[1]});
+		//	Try again.
+		return safeMove(snk, to, state, stops)
+	}
 
 	//	Check if trap and try to avoid.
 	let cell = state.cellAt(path[1]), cellSize = cell.length;
@@ -136,7 +152,7 @@ const safeMove = (snk, to, state, cells=null, stops=null) => {
 		stops = stops || [];
 		stops.push({pt: path[1], p: path, cs: cellSize});
 		//	Try again.
-		return safeMove(snk, to, state, cells, stops);
+		return safeMove(snk, to, state, stops);
 	}
 	
 	//	It's cool.
