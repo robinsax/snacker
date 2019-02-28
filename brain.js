@@ -112,7 +112,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	/** Whether a given path is dangerous. XXX: simplistic. */
 	const isDangerous = path => {
 		let dangerous = false;
-		path.forEach(({pt}) => {
+		path.forEach(pt => {
 			if (dangerous) return;
 			
 			opHeads.forEach(h => {
