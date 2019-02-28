@@ -50,13 +50,15 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		}));
 	});
 
+	//	Gather opponent heads.
+	let opHeads = state.opponents.map(({head}) => head),
+		opHeadsMap = mapify(opHeads);
+
 	//	Discover best option.
 	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
 	options.forEach(opt => {
 		//	XXX: not using hasFood?
-		let {cell, path, walls, hasFood} = opt,
-			opHeads = state.opponents.map(({head}) => head),
-			opHeadsMap = mapify(opHeads);
+		let {cell, path, walls, hasFood} = opt;
 		//	Check for opponent heads.
 		console.log('---- opt wall check ----', cell, path, walls);
 		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
