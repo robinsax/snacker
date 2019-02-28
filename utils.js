@@ -227,7 +227,7 @@ class GameState {
 			//	Add snake to occupation matrix, excluding it's tail segment if it
 			//	definitely can't expand on the next move.
 			let nearFood = this.allNeighbors(s.head).filter(a => this.foodMap[keyable(a)]).length > 0;
-			console.log('\tsnake-nalysis k / f / s', s.i, nearFood);
+			console.log('\tsnake-nalysis k / f', s.i, nearFood);
 			s.body.forEach(({x, y}, i) => {
 				if (nearFood || (i < s.body.length - 1)) this.occupationMx[y][x] = s.i;
 			});

@@ -303,12 +303,15 @@ const backoffMove = state => {
 		)).length > 0) near.push(head);
 	});
 	console.log('\tnear heads', near);
-	let bestAvoid = null;
-	near.map(pt => ({d: rectilinearDistance(pt, state.self.head), pt})).sort((a, b) => (
-		b.d - a.d
-	)).forEach(({pt, d}) => {
+
+	//	Compute avoid options.
+	let avoidOpts = state.safeNeighbors(state.self.head, state.dangerousOccupationMx),
+		bestAvoid = null;
+	avoidOpts.forEach(pt => {
+		let d = Math.min(near.map(a => rectilinearDistance(a, pt)));
 		console.log('\t\tpt / dist', pt, d);
-		if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d};
+
+		if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d}
 	});
 	console.log('\tbest avoid is', bestAvoid);
 	if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
