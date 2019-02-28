@@ -48,10 +48,10 @@ const conserveSpaceMove = (state, snk) => {
 		//	XXX: not using hasFood?
 		let {cell, path, walls, hasFood} = opt;
 		//	Check for opponent heads.
-		console.log('\t\topt wall check', path[0], walls, walls.filter(({tid}) => tid !== true));
+		console.log('\t\topt wall check', path, walls, walls.filter(({tid}) => tid !== true));
 		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(
-			({body: [head, ...x]}) => head)
-		) || (walls.filter(({tid}) => tid !== true).length > 0);
+			({head}) => head
+		)) || (walls.filter(({tid}) => tid !== true).length > 0);
 		//	Check for escape.
 		let isEscape = false;
 		walls.forEach(({tid, pt}) => {
