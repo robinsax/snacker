@@ -2,7 +2,7 @@
 const {
 	GameState, directionTo, rectilinearDistance,
 	keyable, mapify, createSquigglesIn, cellContainsOneOf, isBeside,
-	listify
+	listify, flatten
 } = require('./utils.js');
 
 //	Mode constants.
