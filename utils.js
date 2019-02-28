@@ -250,8 +250,6 @@ class GameState {
 		let {matrix, valueMap} = this.computeChokeMap();
 		this.chokeMap = matrix;
 		this.chokeValueMap = valueMap;
-
-		console.log(matToStr(this.chokeMap));
 	}
 	
 	/** Return the to-be-saved representation of this state. */

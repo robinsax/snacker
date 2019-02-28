@@ -1,7 +1,7 @@
 /** High level thinking. */
 const {
 	GameState, directionTo, rectilinearDistance,
-	keyable, mapify, createSquigglesIn, cellContainsOneOf
+	keyable, mapify, createSquigglesIn, cellContainsOneOf, isBeside
 } = require('./utils.js');
 
 //	Mode constants.
@@ -143,6 +143,17 @@ const foodMoveAggressive = state => {
 	state.food.forEach(f => {
 		if (move) return;
 
+		//	Skip moves to food that might put us near another snake.
+		let getsSticky = false;
+		state.opponents.forEach(({head}) => {
+			if (getsSticky) return;
+
+			state.allNeighbors(head).forEach(pt => {
+				if (isBeside(pt, f)) getsSticky = true;
+			});
+		});
+		if (getsSticky) return;
+
 		move = safeMove(state.self, f, state);
 	});
 	
@@ -261,7 +272,7 @@ const computeMove = (data, lastState) => {
 		if ((opsBySize[0].length - state.self.length) > 2) {
 			//	There's notably bigger snake, grow.
 			move = foodMoveAggressive(state);
-			if (move) return wrap(move, 'catch up!');
+			if (move) return wrap(move, 'catch up (agro)!');
 		}
 	}
 
