@@ -240,6 +240,9 @@ class GameState {
 		));
 		console.log(this.show());
 
+		//	Ref center.
+		this.center = {x: Math.floor(width/2), y: Math.floor(height/2)}
+
 		//	Compute edge set.
 		this.allEdges = this.computeEdges();
 

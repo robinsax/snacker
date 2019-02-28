@@ -208,10 +208,9 @@ const computeAttackMove = (snk, state) => {
 		if (move) return;
 
 		if (snk.body.length > op.body.length) {
-			//	Try and head over to a possible next move.
-			//	XXX: nearest is naive.
+			//	Try and head over to a possible next move, favoring moving in.
 			let targetable = state.safeNeighbors(op.head).sort((a, b) => (
-				rectilinearDistance(a, snk.head) - rectilinearDistance(b, snk.head)
+				rectilinearDistance(a, state.center) - rectilinearDistance(b, state.center)
 			));
 			console.log('\tchk snk / targ', op.i, targetable);
 			if (!targetable.length) return;
