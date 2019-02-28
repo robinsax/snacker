@@ -303,7 +303,7 @@ const computeMove = (data, lastState) => {
 
 	//	Maybe eat.
 	let found = foodMoveAggressive(state);
-	if (!found.futher && found.move) return wrap(found.move, 'chow time');
+	if (found && !found.futher && found.move) return wrap(found.move, 'chow time');
 
 	//	Maybe escape.
 	//move = backoffMove(state);
