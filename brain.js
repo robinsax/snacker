@@ -165,7 +165,8 @@ const safeMove = (snk, to, state, stops=null) => {
 const foodMoveAggressive = state => {
 	console.log('\tfood agro get?');
 	let found = null;
-	state.food.forEach(f => {
+
+	state.food.filter(f => !state.allEdgesMap[keyable(f)]).forEach(f => {
 		if (found && !found.further) return;
 
 		//	Skip moves to food that might put us near another snake.
@@ -317,7 +318,7 @@ const computeMove = (data, lastState) => {
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		needsToCatchUp = (opsBySize[0].length - state.self.body.length) > 1;
+		needsToCatchUp = opsBySize[0].length > state.self.body.length;
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
 	}
 	if (needsToCatchUp || state.self.health < 20) {
