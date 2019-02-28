@@ -2,12 +2,15 @@ import re
 import sys
 
 fn, turn = sys.argv[1:]
+offs = 0
+if len(sys.argv) == 4:
+	offs = int(sys.argv[3])
 
 with open(fn) as f:
 	log = f.read()
 
-found = None
+found = list()
 for match in re.finditer(r'begin turn %s\n.*?\nmove .*?\n'%turn, log, re.DOTALL):
-	found = match
+	found.push(match)
 
-print(found.group(0))
+print(found[-offs].group(0))
