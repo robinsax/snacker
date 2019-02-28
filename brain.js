@@ -14,7 +14,7 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 	({enh}) => enh,
 	({snh, s}) => (snh.length > s.body.length) && snh,
 	({eh, isDangerous}) => !isDangerous(eh) && eh,
-	({sh, s, isDangerous}) => !isDangerous(sh) && (snh.length > s.body.length) && sh,
+	({sh, s, isDangerous}) => !isDangerous(sh) && (sh.length > s.body.length) && sh,
 	({snh, eh, sh}) => snh || eh || sh
 ];
 
