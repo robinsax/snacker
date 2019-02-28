@@ -144,9 +144,9 @@ const safeMove = (snk, to, state, cells=null, stops=null) => {
 
 /** Move to the nearest food in a currently size-safe cell. */
 const foodMoveAggressive = state => {
-	let move = null;
+	let found = null;
 	state.food.forEach(f => {
-		if (move) return;
+		if (found && !found.futher) return;
 
 		//	Skip moves to food that might put us near another snake.
 		let getsSticky = false;
@@ -160,10 +160,23 @@ const foodMoveAggressive = state => {
 		if (getsSticky) console.log('\tagro get', f, 'is sticky');
 		if (getsSticky) return;
 
-		move = safeMove(state.self, f, state);
+		//	Check if we're further than someone else.
+		let distance = rectilinearDistance(state.self.head, f),
+			further = false;
+		state.opponents.forEach(({head}) => {
+			if (further) return;
+
+			if (rectilinearDistance(head, f) < distance) {
+				console.log('\tagro get', f, 'is disadvantaged');
+				further = true;
+			}
+		});
+
+		let move = safeMove(state.self, f, state);
+		if (move) found = {move, futher};
 	});
 	
-	return move;
+	return found;
 };
 
 /** Move to the food with the highest choke map value. */
@@ -289,12 +302,12 @@ const computeMove = (data, lastState) => {
 	if (move) return wrap(move, 'sick em');
 
 	//	Maybe eat.
-	move = foodMoveAggressive(state);
-	if (move) return wrap(move, 'chow time');
+	let found = foodMoveAggressive(state);
+	if (!found.futher && found.move) return wrap(found.move, 'chow time');
 
 	//	Maybe escape.
-	move = backoffMove(state);
-	if (move) return wrap(move, 'backing off');
+	//move = backoffMove(state);
+	//if (move) return wrap(move, 'backing off');
 
 	//	Try to conserve space.
 	move = conserveSpaceMove(state, state.self);
