@@ -212,24 +212,25 @@ const foodMoveCareful = state => {
 	return move;
 };
 
-/** Move away from opponent heads. */
-//	XXX: Doesn't do anything.
-const escapeHeadsMove = state => {
-	console.log('escape heads?');
-	let heads = state.opponents.map(({head}) => head);
-	/**	Heurisic safety helper */
-	const distToNearest = pt => Math.min(heads.map(h => (
-		rectilinearDistance(h, pt)
-	)));
+/** Move into open space. Pre-triage. */
+const backoffMove = state => {
+	console.log('backoff?');
+	//	Find the points of minimum choke and try to move toward one.
+	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
+		
+	state.chokeValueMap[minChokeV].sort((a, b) => (
+		rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
+	)).forEach(pt => {
+		if (move) return;
 
-	let opts = state.safeNeighbors(state.self).sort((a, b) => (
-		distToNearest(b) - distToNearest(a)
-	));
-	
-	console.log('\tordered opts', opts);
+		move = safeMove(state.self, pt, state);
+	});
 
-	if (opts.length) return directionTo(opts[0]);
-	return null;
+	if (move) {
+		console.log('\tconfirmed chill');
+		return wrap(move, 'im goin over here');
+	}
+	else console.log('\twoah, nvm');
 }
 
 /** 
@@ -271,28 +272,6 @@ const computeMove = (data, lastState) => {
 		};
 	};
 
-	/*
-	//	Maybe chill.
-	if (mode == OMEGA && state.self.health > 60) {
-		console.log('finna chill?');
-		//	Find the points of minimum choke and try to move toward one.
-		let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
-		
-		state.chokeValueMap[minChokeV].sort((a, b) => (
-			rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
-		)).forEach(pt => {
-			if (move) return;
-
-			move = safeMove(state.self, pt, state);
-		});
-
-		if (move) {
-			console.log('\tconfirmed chill');
-			return wrap(move, 'relaxin');
-		}
-		else console.log('\twoah, nvm');
-	}
-	*/
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
@@ -313,8 +292,8 @@ const computeMove = (data, lastState) => {
 	if (move) return wrap(move, 'chow time');
 
 	//	Maybe escape.
-	move = escapeHeadsMove(state);
-	if (move) return wrap(move, 'back off');
+	move = backoffMove(state);
+	if (move) return wrap(move, 'backing off');
 
 	//	Try to conserve space.
 	move = conserveSpaceMove(state, state.self);
