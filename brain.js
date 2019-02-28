@@ -8,6 +8,15 @@ const {
 const ALPHA = 1; // XXX: Agro.
 const OMEGA = 2; // XXX: Cautious.
 
+//	The stack of space conservation selectors.
+const SPACE_CONSERVE_SELECT_STAGES = [
+	({enh}) => enh,
+	({snh}, s) => (snh.length > s.body.length) && snh,
+	({eh}, s, isDangerous) => !isDangerous(eh) && eh,
+	({sh}, s, isDangerous) => !isDangerous(sh) && (snh.length > s.body.length) && sh,
+	({snh, eh, sh}) => snh || eh || sh
+];
+
 /**
 *	Compute a triage move to conserve space.
 *
@@ -46,12 +55,13 @@ const conserveSpaceMove = (state, snk) => {
 	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
 	options.forEach(opt => {
 		//	XXX: not using hasFood?
-		let {cell, path, walls, hasFood} = opt;
+		let {cell, path, walls, hasFood} = opt,
+			opHeads = state.opponents.map(({head}) => head),
+			opHeadsMap = mapify(opHeads);
 		//	Check for opponent heads.
 		console.log('\t\topt wall check', path, walls, walls.filter(({tid}) => tid !== true));
-		let hasOpponentHeads = cellContainsOneOf(cell, state.opponents.map(
-			({head}) => head
-		)) || (walls.filter(({tid}) => tid !== true).length > 0);
+		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
+			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
 		//	Check for escape.
 		let isEscape = false;
 		walls.forEach(({tid, pt}) => {
@@ -97,9 +107,33 @@ const conserveSpaceMove = (state, snk) => {
 			}
 		}
 	});
-	//	Select our best bet, prefering escape.
-	//	XXX: naive, check dist to heads / sizes?
-	let best = escapeNoHeads || spaceNoHeads || spaceHeads || escapeHeads;
+	console.log('--- begin selection');
+	/** Whether a given path is dangerous. XXX: simplistic. */
+	const isDangerous = path => {
+		let dangerous = false;
+		path.forEach(({pt}) => {
+			if (dangerous) return;
+			
+			opHeads.forEach(h => {
+				if (isBeside(pt, h)) dangerous = true;
+			});
+		});
+
+		return dangerous;
+	};
+
+	//	Select our best bet using the preference stack.
+	let best = null, payload = (
+		{enh: escapeNoHeads, eh: escapeHeads, snh: spaceNoHeads, sh: spaceHeads},
+		snk, isDangerous
+	);
+
+	SPACE_CONSERVE_SELECT_STAGES.forEach((fn, k) => {
+		if (best) return;
+
+		best = fn(...payload);
+		console.log('\tstage k', !!best);
+	});
 	
 	//	Finish.
 	if (best) {

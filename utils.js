@@ -342,7 +342,7 @@ class GameState {
 		}
 
 		//	Run.
-		//	XXX: Timeout?
+		//	XXX: timeout?
 		let { status, path } = aStar({
 			start: xyToNode(from),
 			isEnd: ([x, y]) => equal(to, {x, y}),
