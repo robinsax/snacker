@@ -18,16 +18,16 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 ];
 
 /**
-*	Compute a triage move to conserve space.
+*	Compute a triage move to conserve space (inner fn).
 *
 *	XXX: Won't work properly if snk isn't self because of occupation matrix lookahead and
 *		oppenent check hardcoding.
 */
-const conserveSpaceMove = (state, snk) => {
+const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	let cells = [];
 	//	Find all possible cells.
-	cells = state.safeNeighbors(snk.head, state.dangerousOccupationMx).map(pt => (
-		state.cellAt(pt, state.dangerousOccupationMx)
+	cells = state.safeNeighbors(snk.head, dangerous && state.dangerousOccupationMx).map(pt => (
+		state.cellAt(pt, dangerous && state.dangerousOccupationMx)
 	)).filter(c => c.length > 0);
 	console.log('conserve space option count:', cells.length, 'vs len', snk.body.length);
 
@@ -59,7 +59,7 @@ const conserveSpaceMove = (state, snk) => {
 			opHeads = state.opponents.map(({head}) => head),
 			opHeadsMap = mapify(opHeads);
 		//	Check for opponent heads.
-		console.log('\t\topt wall check', path, walls, walls.filter(({tid}) => tid !== true));
+		console.log('---- opt wall check ----', cell, path, walls);
 		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
 			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
 		//	Check for escape.
@@ -145,6 +145,13 @@ const conserveSpaceMove = (state, snk) => {
 		return null;
 	}
 };
+
+/**
+*	Compute a space conservation move. 
+*/
+const conserveSpaceMove = (state, snk) => {
+	return conserveSpaceMoveInner(state, snk) || conserveSpaceMoveInner(state, snk, true);
+}
 
 /**
 *	Compute a move to a point with safety checks. 
