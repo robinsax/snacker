@@ -147,7 +147,7 @@ const foodMoveAggressive = state => {
 	console.log('\tfood agro get?');
 	let found = null;
 	state.food.forEach(f => {
-		if (found && !found.futher) return;
+		if (found && !found.further) return;
 
 		//	Skip moves to food that might put us near another snake.
 		let getsSticky = false;
@@ -174,7 +174,7 @@ const foodMoveAggressive = state => {
 		});
 
 		let move = safeMove(state.self, f, state);
-		if (move) found = {move, futher};
+		if (move) found = {move, further};
 	});
 	
 	return found;
@@ -304,7 +304,7 @@ const computeMove = (data, lastState) => {
 
 	//	Maybe eat.
 	let found = foodMoveAggressive(state);
-	if (found && !found.futher && found.move) return wrap(found.move, 'chow time');
+	if (found && !found.further && found.move) return wrap(found.move, 'chow time');
 
 	//	Maybe escape.
 	move = backoffMove(state);
