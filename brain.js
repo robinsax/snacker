@@ -432,8 +432,9 @@ const computeMove = (data, lastState) => {
 		needsToCatchUp = opsBySize[0].body.length > state.self.body.length;
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
 	}
-	if (needsToCatchUp || state.self.health < 25) {
-		move = foodMoveAggressive(state, true);
+	let lowHP = state.self.health < 25;
+	if (needsToCatchUp || lowHP) {
+		move = foodMoveAggressive(state, lowHP);
 		if (move) return wrap(move, 'chow time to catch up');
 	} 
 
