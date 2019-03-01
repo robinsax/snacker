@@ -230,12 +230,17 @@ const foodMoveAggressive = (state, urgent=false) => {
 		return okayDist;
 	});
 
+	//	Collect snakes that can kill us.
+	let killers = state.opponents.filter(({body}) => (
+		body.length >= state.self.body.length
+	));
+
 	toCheck.forEach(f => {
 		if (found && !found.further) return;
 
-		//	Skip moves to food that might put us near another snake.
+		//	Skip moves to food that might put us near another, larger snake.
 		let getsSticky = false;
-		state.opponents.forEach(({head}) => {
+		killers.forEach(({head}) => {
 			if (getsSticky) return;
 
 			state.allNeighbors(head).forEach(pt => {
