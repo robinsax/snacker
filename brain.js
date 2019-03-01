@@ -19,6 +19,26 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 ];
 
 /**
+*	Compute whether we can escape from the given cell. 
+*/
+const canEscape = (walls, state) => {
+	let isEscape = false;
+	walls.forEach(({tid, pt}) => {
+		//	That's the board edge or we already figured this out.
+		if ((tid === true) || isEscape) return;
+
+		let snake = state.snakeMap[tid],
+			segI = snake.bodyMap[keyable(pt)];
+		//	Check if this will be gone after running this path. Subtract an extra 1
+		//	Since we can travel through tail segments.
+		//	XXX: No margin of error.
+		if ((snake.body.length - segI - 1) < path.length) isEscape = true;
+	});
+
+	return isEscape;
+};
+
+/**
 *	Compute a triage move to conserve space (inner fn).
 *
 *	XXX: Won't work properly if snk isn't self because of occupation matrix lookahead and
@@ -71,18 +91,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
 
 		//	Check for escape.
-		let isEscape = false;
-		walls.forEach(({tid, pt}) => {
-			//	That's the board edge or we already figured this out.
-			if ((tid === true) || isEscape) return;
-
-			let snake = state.snakeMap[tid],
-				segI = snake.bodyMap[keyable(pt)];
-			//	Check if this will be gone after running this path. Subtract an extra 1
-			//	Since we can travel through tail segments.
-			//	XXX: No margin of error.
-			if ((snake.body.length - segI - 1) < path.length) isEscape = true;
-		});
+		let isEscape = canEscape(walls, state);
 		
 		//	Maybe assign to maxes.
 		console.log('\trun maxes for', opt.path[0]);
@@ -342,10 +351,27 @@ const backoffMove = state => {
 		if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
 	}
 
-	//	Find the points of minimum choke and try to move toward one.
-	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0],
-		move;
+	//	Maybe we can chase tail?
+	let move;
+	console.log('chase tail?');
+	state.safeNeighbors(state.self.head).forEach(pt => {
+		if (move) return;
 		
+		let cell = state.cellAt(pt);
+		if (cell.length == 0) return;
+		let wallMap = state.cellWallsFor(cell),
+			walls = listify(wallMap);
+
+		//	If this cell has other snakes as edges ignore.
+		//	XXX: reduce to check for head.
+		if (walls.filter(({tid}) => (
+			tid !== true && tid !== state.self.i).length > 0
+		)) move = directionTo(pt);
+	});
+
+	//	Find the points of minimum choke and try to move toward one.
+	console.log('maximize choke?');
+	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
 	state.chokeValueMap[minChokeV].sort((a, b) => (
 		rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
 	)).forEach(pt => {
@@ -411,7 +437,7 @@ const computeMove = (data, lastState) => {
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		needsToCatchUp = opsBySize[0].length > state.self.body.length;
+		needsToCatchUp = opsBySize[0].body.length > state.self.body.length;
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
 	}
 	if (needsToCatchUp || state.self.health < 25) {
