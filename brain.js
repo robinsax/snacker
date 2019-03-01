@@ -275,7 +275,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 		if (move) found = {move, further};
 	});
 	
-	return found;
+	return !found.further && found.move;
 };
 
 /** Move to the food with the highest choke map value. */
@@ -442,7 +442,7 @@ const computeMove = (data, lastState) => {
 	}
 	if (needsToCatchUp || state.self.health < 25) {
 		move = foodMoveAggressive(state, true);
-		if (move) return wrap(move, 'chow time');
+		if (move) return wrap(move, 'chow time to catch up');
 	} 
 
 	//	Maybe attack.
@@ -450,8 +450,8 @@ const computeMove = (data, lastState) => {
 	if (move) return wrap(move, 'sick em');
 
 	//	Maybe eat.
-	let found = foodMoveAggressive(state);
-	if (found && !found.further && found.move) return wrap(found.move, 'chow time');
+	move = foodMoveAggressive(state);
+	if (move) return wrap(move, 'chow time');
 
 	//	Maybe escape.
 	move = backoffMove(state);
