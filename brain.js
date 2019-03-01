@@ -275,7 +275,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 		if (move) found = {move, further};
 	});
 	
-	return !found.further && found.move;
+	return found && !found.further && found.move;
 };
 
 /** Move to the food with the highest choke map value. */
