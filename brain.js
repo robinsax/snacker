@@ -19,9 +19,9 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 ];
 
 /**
-*	Compute whether we can escape from the given cell. 
+*	Compute whether we can escape from the given cell with the given path. 
 */
-const canEscape = (walls, state) => {
+const canEscape = (walls, path, state) => {
 	let isEscape = false;
 	walls.forEach(({tid, pt}) => {
 		//	That's the board edge or we already figured this out.
@@ -91,7 +91,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
 
 		//	Check for escape.
-		let isEscape = canEscape(walls, state);
+		let isEscape = canEscape(walls, path, state);
 		
 		//	Maybe assign to maxes.
 		console.log('\trun maxes for', opt.path[0]);
