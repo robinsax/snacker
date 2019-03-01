@@ -224,7 +224,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 	console.log('food agro get? u:', urgent);
 	let found = null, toCheck = state.food;
 
-	//	Avoid walls if we're not super hungry.
+	//	Avoid walls if we're not urgent.
 	if (!urgent) toCheck = toCheck.filter(f => {
 		if (!state.allEdgesMap[keyable(f)]) return true;
 
@@ -233,7 +233,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 		state.opponents.forEach(({head}) => {
 			if (!okayDist) return;
 
-			if (rectilinearDistance(head, f) < (myDist - 2)) okayDist = false;
+			if (rectilinearDistance(head, f) < (myDist - 5)) okayDist = false;
 		});
 
 		return okayDist;
