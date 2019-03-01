@@ -356,7 +356,7 @@ const backoffMove = state => {
 	console.log('chase tail?');
 	state.safeNeighbors(state.self.head).forEach(pt => {
 		if (move) return;
-		
+
 		let cell = state.cellAt(pt);
 		if (cell.length == 0) return;
 		let wallMap = state.cellWallsFor(cell),
@@ -366,7 +366,7 @@ const backoffMove = state => {
 		//	XXX: reduce to check for head.
 		if (walls.filter(({tid}) => (
 			tid !== true && tid !== state.self.i).length > 0
-		)) move = directionTo(pt);
+		)) move = directionTo(state.self.head, pt);
 	});
 
 	//	Find the points of minimum choke and try to move toward one.
