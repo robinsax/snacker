@@ -94,3 +94,103 @@
 		).length == 0)) move = directionTo(state.self.head, pt);
 	});
 	if (move) return move;
+
+
+	
+/** Move to the food with the highest choke map value. */
+const foodMoveAvoidance = state => {
+	//	Order from greatest choke map value to least.
+	let ordered = state.food.map(pt => (
+		{pt, chk: state.chokeMap[pt.y][pt.x]}
+	)).sort((a, b) => (
+		b.chk - a.chk
+	));
+
+	return safeMove(state.self, ordered[0].pt, state);
+};
+
+/** Move to the nearest food in the safest cell. */
+const foodMoveCareful = state => {
+	//	Get nearby cells.
+	let neighbors = state.safeNeighbors(state.self.head),
+		cells = neighbors.map(n => state.cellAt(n)).filter(a => (
+			a.length >= state.self.body.length
+		)).sort((a, b) => (
+			b.length - a.length
+		)),
+		cellMaps = cells.map(mapify);
+	console.log('careful cell sizes', cells.map(c => c.length));
+
+	//	Find nearest food with super-priority being cell quality.
+	let move = null;
+	cellMaps.forEach(c => {
+		if (move) return;
+		//	Collect list of food in cell in ascending order of distance.
+		let foodHere = state.food.filter(f => c[keyable(f)]).sort((a, b) => (
+			(rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head))
+			/
+			state.chokeMap[a.y][a.x]
+		));
+		console.log('fd here', foodHere);
+
+		foodHere.forEach(f => {
+			if (move) return null;
+
+			move = safeMove(state.self, f, state);
+		});
+	});
+
+	return move;
+};
+
+/** Move into open space. Pre-triage. */
+const backoffMove = state => {
+	console.log('backoff?');
+	//	First, if there's snakes nearby we want to move directly away.
+	let near = [];
+	state.opponents.forEach(({head}) => {
+		if (state.safeNeighbors(head, state.dangerousOccupationMx).filter(pt => (
+			isBeside(pt, state.self.head)
+		)).length > 0) near.push(head);
+	});
+	console.log('\tnear heads', near);
+
+	if (near.length) {
+		//	XXX: naive.
+		//	Compute avoid options.
+		let avoidOpts = state.safeNeighbors(state.self.head, state.dangerousOccupationMx),
+			bestAvoid = null;
+
+		//	Maybe include own tail.
+		let selfTail = state.self.body[state.self.body.length - 1];
+		if (isBeside(state.self.head, selfTail)) avoidOpts.push(selfTail);
+
+		avoidOpts.forEach(pt => {
+			let d = Math.min(...near.map(a => rectilinearDistance(a, pt)));
+			console.log('\t\tpt / dist', pt, d);
+
+			if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d}
+		});
+		console.log('\tbest avoid is', bestAvoid);
+		if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt, state);
+	}
+
+	//	Find the points of minimum choke and try to move toward one.
+	console.log('maximize choke?');
+	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0], 
+		move = null;
+	state.chokeValueMap[minChokeV].sort((a, b) => (
+		rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
+	)).forEach(pt => {
+		if (move) return;
+
+		console.log('\t\tlowest choke', pt);
+		move = safeMove(state.self, pt, state);
+	});
+
+	if (move) {
+		console.log('\tconfirmed chill');
+		return move;
+	}
+	else console.log('\twoah, nvm');
+}
