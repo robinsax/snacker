@@ -221,7 +221,7 @@ const safeMove = (snk, to, state, stops=null) => {
 
 /** Move to the nearest food in a currently size-safe cell. */
 const foodMoveAggressive = (state, urgent=false) => {
-	console.log('\tfood agro get?');
+	console.log('food agro get? u:', urgent);
 	let found = null, toCheck = state.food;
 
 	//	Avoid walls if we're not super hungry.
@@ -238,12 +238,15 @@ const foodMoveAggressive = (state, urgent=false) => {
 
 		return okayDist;
 	});
+	console.log('check set', toCheck);
 
 	//	Collect snakes that can kill us.
 	let killers = state.opponents.filter(({body}) => (
 		body.length >= state.self.body.length
 	)), further = null;
 	toCheck.forEach(f => {
+		if (found) return;
+
 		//	Skip moves to food that might put us near another, larger snake.
 		let getsSticky = false;
 		killers.forEach(({head}) => {
