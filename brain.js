@@ -13,7 +13,7 @@ const OMEGA = 2; // XXX: Cautious.
 const SPACE_CONSERVE_SELECT_STAGES = [
 	({enh}) => enh,
 	({snh, s}) => snh && (snh.length > s.body.length) && snh,
-	({eh, s, nearestHead}) => eh && (eh.length > s.body.length) && eh,
+	({eh, s, nearestHead}) => eh && (eh.length > s.body.length) && nearestHead(eh) > 3 && eh,
 	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
 	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
 	({eh, snh}) => eh && snh && eh.length > snh.length && eh, // Prefer escapes to saves with a chance to survive.
@@ -84,6 +84,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 
 	let opHeadsMap = mapify(opHeads);
 
+	//	XXX: This needs to be changed!
 	//	Discover best option.
 	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
 	options.forEach(opt => {
@@ -352,16 +353,21 @@ const computeMove = (data, lastState) => {
 		);
 		//	Sort by distance from enemy heads (nearest to furthest).
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
+			console.log('\t\t## cmp opt', a, b);
 			let aD = nearestOpponent(a), bD = nearestOpponent(b);
+			console.log('\t\t\ta / b dist', aD, bD);
 
 			if (aD == bD) {
 				let aE = state.allEdgesMap[keyable(a)],
 					bE = state.allEdgesMap[keyable(b)];
 				
+				console.log('\t\t\ta / b edge', aE, bE);
 				if (aE != bE) return aE ? 1 : -1;
 				return 0;
 			}
-			else return aD - bD;
+			else {
+				return aD - bD;
+			}
 		}), stops = [...options];
 		stops.reverse();
 		while (stops.length) {
@@ -380,6 +386,7 @@ const computeMove = (data, lastState) => {
 		});
 	}
 
+	//	Check if we want to prioritize eating.
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
