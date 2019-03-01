@@ -420,8 +420,8 @@ const computeMove = (data, lastState) => {
 	//	Prioritize safety when against walls.
 	if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
-		//	Try to conserve space.
-		move = backoffMove(state);
+		//	Try to get off.
+		move = safeMove(state.self, state.center, state);
 		if (move) return wrap(move, 'i hate edges');
 	}
 
