@@ -355,9 +355,9 @@ const computeMove = (data, lastState) => {
 		});
 		while (options.length) {
 			options.pop();
-			console.log('\ttry to centeralize w/ stops', options.map(pt => ({pt})));
+			console.log('\ttry to centeralize w/ stops', options);
 		
-			move = safeMove(state.self, state.center, state, options);
+			move = safeMove(state.self, state.center, state, options.map(pt => ({pt})));
 			if (move) return wrap(move, 'i hate edges');
 		}
 	}
