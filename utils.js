@@ -361,7 +361,7 @@ class GameState {
 		let {width, height} = this.size;
  		return flatten([
 			range(0, width).map(x => ([{x, y: 0}, {x, y: height - 1}])),
-			range(0, height).map(y => ([{y, x: 0}, {y, x: width}]))
+			range(0, height).map(y => ([{y, x: 0}, {y, x: width - 1}]))
 		]);
 	}
 	
