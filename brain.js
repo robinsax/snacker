@@ -368,6 +368,7 @@ const backoffMove = state => {
 			tid !== true && tid !== state.self.i).length > 0
 		)) move = directionTo(state.self.head, pt);
 	});
+	if (move) return move;
 
 	//	Find the points of minimum choke and try to move toward one.
 	console.log('maximize choke?');
@@ -377,6 +378,7 @@ const backoffMove = state => {
 	)).forEach(pt => {
 		if (move) return;
 
+		console.log('\t\tlowest choke', pt);
 		move = safeMove(state.self, pt, state);
 	});
 
