@@ -15,7 +15,8 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 	({snh, s}) => snh && (snh.length > s.body.length) && snh,
 	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
 	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
-	({sh, snh}) => sh.length > snh.length && sh, // Prefer space saves with a change to survive.
+	({eh, snh}) => eh && snh && eh.length > snh.length && eh, // Prefer escapes to saves with a chance to survive.
+	({sh, snh}) => sh && snh && sh.length > snh.length && sh, // Prefer space saves with a chance to survive.
 	({snh, eh, sh}) => snh || eh || sh
 ];
 
