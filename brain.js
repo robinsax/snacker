@@ -155,7 +155,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	//	Finish.
 	if (best) {
 		console.log('selected', best[0]);
-		return directionTo(snk.head, best[0]);
+		return directionTo(snk.head, best[0], state);
 	}
 	else {
 		console.log('failed');
@@ -185,7 +185,7 @@ const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 	//	Check if trap and try to avoid.
 	let cell = state.cellAt(path[1]), cellSize = cell.length;
 	if (cellSize < snk.body.length && !attackToHead) {
-		console.log('\ta* wants to trap me | would move', directionTo(snk.head, path[1]));
+		console.log('\ta* wants to trap me | would move', directionTo(snk.head, path[1], state));
 		console.log('\tsl / stps', snk.body.length, stops);
 
 		//	Add stop so we can recompute.
@@ -204,7 +204,7 @@ const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 		});
 	});
 	if (isSticky) {
-		console.log('a* wants to get sticky | would move', directionTo(snk.head, path[1]));
+		console.log('a* wants to get sticky | would move', directionTo(snk.head, path[1], state));
 		
 		//	Add to stops so we can recompute.
 		stops = stops || [];
@@ -216,7 +216,7 @@ const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 	}
 	
 	//	It's cool.
-	return directionTo(snk.head, path[1]);
+	return directionTo(snk.head, path[1], state);
 };
 
 /** Move to the nearest food in a currently size-safe cell. */
@@ -356,7 +356,7 @@ const backoffMove = state => {
 			if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d}
 		});
 		console.log('\tbest avoid is', bestAvoid);
-		if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
+		if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt, state);
 	}
 
 	//	Find the points of minimum choke and try to move toward one.
@@ -457,7 +457,7 @@ const computeMove = (data, lastState) => {
 	let open = state.safeNeighbors(state.self.head, state.dangerousOccupationMx)[0];
 	if (open) {
 		console.log('buying time at', open);
-		return wrap(directionTo(state.self.head, open), '*worried slither*');
+		return wrap(directionTo(state.self.head, open, state), '*worried slither*');
 	}
 
 	console.log('sorry, i suck');

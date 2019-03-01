@@ -1,16 +1,6 @@
 /** Utilities and algorithms. */
 const aStar = require('a-star');
 
-//	Constants.
-
-//	Move options.
-const MOVE_OPS = [
-	[(a, b) => a.x < b.x, 'right'],	
-	[(a, b) => a.x > b.x, 'left'],
-	[(a, b) => a.y < b.y, 'down'],
-	[(a, b) => a.y > b.y, 'up']
-];
-
 //	Helpers.
 
 /** Print a matrix. */
@@ -66,6 +56,14 @@ const east = ({x, y}) => { return {x: x + 1, y}; };
 /** Move point west once. */
 const west = ({x, y}) => { return {x: x - 1, y}; };
 
+//	Move options.
+const MOVE_OPS = [
+	[(a, b) => a.x < b.x, 'right', east],	
+	[(a, b) => a.x > b.x, 'left', west],
+	[(a, b) => a.y < b.y, 'down', south],
+	[(a, b) => a.y > b.y, 'up', north]
+];
+
 /** Create a key-ready representation of a point of O(1) lookups. */
 const keyable = ({x, y}) => x + ',' + y;
 /** Recreate a point from a keyed representation. */
@@ -109,9 +107,19 @@ const deepEqual = (a, b) => {
 *	hardcode direction preference to avoid it being inferred. Asking to noop move
 *	will result in null return.
 */
-const directionTo = (from, to) => shuffle(MOVE_OPS).filter(([cond, ...t]) => (
-	cond(from, to)
-)).map(([t, res]) => res)[0] || null;
+const directionTo = (from, to, state) => {
+	//	Maybe avoid walls.
+	if (state) {
+		let offWallOpts = shuffle(MOVE_OPS).filter(([cond, res, exec]) => (
+			cond(from, to) && !state.allEdgesMap[keyable(exec(from))]
+		)).map(([r, res, exec]) => res);
+		if (offWallOpts.length) return offWallOpts[0];
+	}
+
+	return shuffle(MOVE_OPS).filter(([cond, ...t]) => (
+		cond(from, to)
+	)).map(([t, res, exec]) => res)[0] || null;
+}
 
 //	Squiggling utils.
 
