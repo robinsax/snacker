@@ -354,6 +354,7 @@ const computeMove = (data, lastState) => {
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
 			nearestOpponent(a) - nearestOpponent(b)
 		}), stops = [...options];
+		stops.reverse();
 		while (stops.length) {
 			stops.pop();
 			console.log('\ttry to centeralize w/ stops', stops);
