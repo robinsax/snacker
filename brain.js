@@ -143,8 +143,9 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	};
 	/** Return the nearest head exposed to the given path. */
 	const nearestHead = path => {
-		let cell = mapify(state.cellAt(path[1]).concat(listify(state.cellWallsFor(cell)))),
+		let cell = state.cellAt(path[1]),
 			nearest = null;
+		cell = mapify(cell.concat(listify(state.cellWallsFor(cell))));
 		opHeads.forEach(h => {
 			let dist = rectilinearDistance(path[1], h);
 			if (cell[keyable(h)] && (!nearest || dist < nearest.dist)) {
