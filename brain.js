@@ -399,7 +399,7 @@ const computeAttackMove = (snk, state) => {
 			console.log('\tchk snk / targ', op.i, targetable);
 			if (!targetable.length) return;
 
-			move = safeMove(snk, targetable[0], state, true);
+			move = safeMove(snk, targetable[0], state, null, true);
 			console.log('\tattack to snake / move fnd', op.i, move);
 		}
 	});
