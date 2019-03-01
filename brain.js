@@ -350,25 +350,6 @@ const backoffMove = state => {
 		if (bestAvoid) return directionTo(state.self.head, bestAvoid.pt);
 	}
 
-	//	Maybe we can chase tail?
-	let move;
-	console.log('chase tail?');
-	state.safeNeighbors(state.self.head).forEach(pt => {
-		if (move) return;
-
-		let cell = state.cellAt(pt);
-		if (cell.length == 0) return;
-		let wallMap = state.cellWallsFor(cell),
-			walls = listify(wallMap);
-
-		//	If this cell has other snakes as edges ignore.
-		//	XXX: reduce to check for head.
-		if (walls.filter(({tid}) => (
-			tid !== true && tid !== state.self.i
-		).length == 0)) move = directionTo(state.self.head, pt);
-	});
-	if (move) return move;
-
 	//	Find the points of minimum choke and try to move toward one.
 	console.log('maximize choke?');
 	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
