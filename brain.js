@@ -143,9 +143,9 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	};
 	/** Return the nearest head exposed to the given path. */
 	const nearestHead = path => {
-		let cell = state.cellAt(path[1]),
-			nearest = null;
+		let cell = state.cellAt(path[1]), nearest = null;
 		cell = mapify(cell.concat(listify(state.cellWallsFor(cell))));
+
 		opHeads.forEach(h => {
 			let dist = rectilinearDistance(path[1], h);
 			if (cell[keyable(h)] && (!nearest || dist < nearest.dist)) {
@@ -343,9 +343,23 @@ const computeMove = (data, lastState) => {
 	//	Prioritize safety when against walls.
 	if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
-		//	Try to get off.
-		move = safeMove(state.self, state.center, state);
-		if (move) return wrap(move, 'i hate edges');
+		/** Return the distance from the given cell to the nearest opponent's head. */
+		const nearestOpponent = o => (
+			Math.min(...state.opponents.map(({head}) => rectilinearDistance(o, head)))
+		);
+		//	Try to get off, prefering to move away from opponents.
+
+		//	Sort by distance from enemy heads (nearest to furthest).
+		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
+			nearestOpponent(a) - nearestOpponent(b)
+		});
+		while (options.length) {
+			options.pop();
+			console.log('\ttry to centeralize w/ stops', options);
+		
+			move = safeMove(state.self, state.center, state, options);
+			if (move) return wrap(move, 'i hate edges');
+		}
 	}
 
 	let needsToCatchUp = false;
