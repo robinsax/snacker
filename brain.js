@@ -15,6 +15,7 @@ const SPACE_CONSERVE_SELECT_STAGES = [
 	({snh, s}) => snh && (snh.length > s.body.length) && snh,
 	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
 	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
+	({sh, snh}) => sh.length > snh.length && sh, // Prefer space saves with a change to survive.
 	({snh, eh, sh}) => snh || eh || sh
 ];
 
@@ -430,7 +431,7 @@ const computeMove = (data, lastState) => {
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
 		needsToCatchUp = opsBySize[0].body.length > state.self.body.length;
-		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0]);
+		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0] && opsBySize[0].i);
 	}
 	let lowHP = state.self.health < 25;
 	if (needsToCatchUp || lowHP) {
