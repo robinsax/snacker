@@ -67,7 +67,6 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		//	XXX: not using hasFood?
 		let {cell, path, walls, hasFood} = opt;
 		//	Check for opponent heads.
-		console.log('---- opt wall check ----', cell, path, walls);
 		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
 			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
 
