@@ -352,7 +352,8 @@ const backoffMove = state => {
 
 	//	Find the points of minimum choke and try to move toward one.
 	console.log('maximize choke?');
-	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0];
+	let minChokeV = Object.keys(state.chokeValueMap).sort((a, b) => b - a)[0], 
+		move = null;
 	state.chokeValueMap[minChokeV].sort((a, b) => (
 		rectilinearDistance(a, state.self.head) - rectilinearDistance(b, state.self.head)
 	)).forEach(pt => {
