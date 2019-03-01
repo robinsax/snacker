@@ -399,7 +399,7 @@ const computeMove = (data, lastState) => {
 	if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
 		//	Try to conserve space.
-		move = conserveSpaceMove(state, state.self);
+		move = backoffMove(state);
 		if (move) return wrap(move, 'i hate edges');
 	}
 
