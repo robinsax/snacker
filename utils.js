@@ -423,5 +423,5 @@ module.exports = {
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
 	createSquigglesIn, showMat, cellContainsOneOf, matToStr,
-	GameState, Snake
+	GameState, Snake, flatten
 };
