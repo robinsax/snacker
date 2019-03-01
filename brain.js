@@ -436,15 +436,16 @@ const computeMove = (data, lastState) => {
 	if (needsToCatchUp || lowHP) {
 		move = foodMoveAggressive(state, lowHP);
 		if (move) return wrap(move, 'chow time to catch up');
-	} 
+	}
+	else {
+		//	Maybe attack.
+		move = computeAttackMove(state.self, state);
+		if (move) return wrap(move, 'sick em');
 
-	//	Maybe attack.
-	move = computeAttackMove(state.self, state);
-	if (move) return wrap(move, 'sick em');
-
-	//	Maybe eat.
-	move = foodMoveAggressive(state);
-	if (move) return wrap(move, 'chow time');
+		//	Maybe eat.
+		move = foodMoveAggressive(state);
+		if (move) return wrap(move, 'chow time');
+	}
 
 	//	Maybe escape.
 	//move = backoffMove(state);
