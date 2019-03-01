@@ -96,8 +96,9 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		//	Check for escape.
 		let isEscape = canEscape(walls, path, state);
 		
+		//	XXX: This system sucks, got to go.
 		//	Maybe assign to maxes.
-		console.log('\trun maxes for', opt.path[0]);
+		console.log('\trun maxes for / props', opt.path[0]);
 		if (!hasOpponentHeads) {
 			if (isEscape) {
 				if (!escapeNoHeads || (escapeNoHeads.length < path.length)) {
@@ -343,23 +344,30 @@ const computeMove = (data, lastState) => {
 	//	Prioritize safety when against walls.
 	if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
+		
+		//	Try to get off, prefering to move away from opponents.
 		/** Return the distance from the given cell to the nearest opponent's head. */
 		const nearestOpponent = o => (
 			Math.min(...state.opponents.map(({head}) => rectilinearDistance(o, head)))
 		);
-		//	Try to get off, prefering to move away from opponents.
-
 		//	Sort by distance from enemy heads (nearest to furthest).
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
 			nearestOpponent(a) - nearestOpponent(b)
-		});
-		while (options.length) {
-			options.pop();
-			console.log('\ttry to centeralize w/ stops', options);
+		}), stops = [...options];
+		while (stops.length) {
+			stops.pop();
+			console.log('\ttry to centeralize w/ stops', stops);
 		
-			move = safeMove(state.self, state.center, state, options.map(pt => ({pt})));
-			if (move) return wrap(move, 'i hate edges');
+			move = safeMove(state.self, state.center, state, stops.map(pt => ({pt})));
+			if (move) return wrap(move, 'center here i come');
 		}
+
+		//	Move to the nearest cell if that's okay.
+		//	Sort cells in order of size.
+		options.forEach(o => {
+			if (state.cellAt(o).length > state.self.body.length) 
+			return wrap(directionTo(state.self.head, o, state), 'over here looks cool');
+		});
 	}
 
 	let needsToCatchUp = false;
