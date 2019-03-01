@@ -328,7 +328,7 @@ const backoffMove = state => {
 		let avoidOpts = state.safeNeighbors(state.self.head, state.dangerousOccupationMx),
 			bestAvoid = null;
 		avoidOpts.forEach(pt => {
-			let d = Math.min(near.map(a => rectilinearDistance(a, pt)));
+			let d = Math.min(...near.map(a => rectilinearDistance(a, pt)));
 			console.log('\t\tpt / dist', pt, d);
 
 			if (!bestAvoid || bestAvoid.d < d) bestAvoid = {pt, d}
