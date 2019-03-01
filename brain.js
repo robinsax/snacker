@@ -352,7 +352,16 @@ const computeMove = (data, lastState) => {
 		);
 		//	Sort by distance from enemy heads (nearest to furthest).
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
-			nearestOpponent(a) - nearestOpponent(b)
+			let aD = nearestOpponent(a), bD = nearestOpponent(b);
+
+			if (aD == bD) {
+				let aE = state.allEdgesMap[keyable(a)],
+					bE = state.allEdgesMap[keyable(b)];
+				
+				if (aE != bE) return aE ? 1 : -1;
+				return 0;
+			}
+			else return aD - bD;
 		}), stops = [...options];
 		stops.reverse();
 		while (stops.length) {
