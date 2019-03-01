@@ -242,11 +242,8 @@ const foodMoveAggressive = (state, urgent=false) => {
 	//	Collect snakes that can kill us.
 	let killers = state.opponents.filter(({body}) => (
 		body.length >= state.self.body.length
-	));
-
+	)), further = null;
 	toCheck.forEach(f => {
-		if (found && !found.further) return;
-
 		//	Skip moves to food that might put us near another, larger snake.
 		let getsSticky = false;
 		killers.forEach(({head}) => {
@@ -261,23 +258,23 @@ const foodMoveAggressive = (state, urgent=false) => {
 
 		//	Check if we're further than someone else.
 		let distance = rectilinearDistance(state.self.head, f),
-			further = false;
-		if (!urgent) {
-			state.opponents.forEach(({head}) => {
-				if (further) return;
+			isFurther = false;
+		state.opponents.forEach(({head}) => {
+			if (isFurther) return;
 
-				if (rectilinearDistance(head, f) < distance) {
-					console.log('\tagro get', f, 'is disadvantaged');
-					further = true;
-				}
-			});
-		}
+			if (rectilinearDistance(head, f) < distance) {
+				console.log('\tagro get', f, 'is disadvantaged');
+				isFurther = true;
+			}
+		});
 
 		let move = safeMove(state.self, f, state);
-		if (move) found = {move, further};
+		if (isFurther) further = move;
+		else found = move;
 	});
 	
-	return found && !found.further && found.move;
+	if (found) return found;
+	return urgent && further;
 };
 
 /** Move to the food with the highest choke map value. */
