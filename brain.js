@@ -216,9 +216,19 @@ const foodMoveAggressive = (state, urgent=false) => {
 	let found = null, toCheck = state.food;
 
 	//	Avoid walls if we're not super hungry.
-	if (!urgent) toCheck = toCheck.filter(f => (
-		!state.allEdgesMap[keyable(f)]
-	));
+	if (!urgent) toCheck = toCheck.filter(f => {
+		if (!state.allEdgesMap[keyable(f)]) return true;
+
+		//	Make sure we're significantly closer.
+		let okayDist = true, myDist = rectilinearDistance(state.self.head, f);
+		state.opponents.forEach(({head}) => {
+			if (!okayDist) return;
+
+			if (rectilinearDistance(head, f) < (myDist - 2)) okayDist = false;
+		});
+
+		return okayDist;
+	});
 
 	toCheck.forEach(f => {
 		if (found && !found.further) return;
