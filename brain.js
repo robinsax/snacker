@@ -13,6 +13,7 @@ const OMEGA = 2; // XXX: Cautious.
 const SPACE_CONSERVE_SELECT_STAGES = [
 	({enh}) => enh,
 	({snh, s}) => snh && (snh.length > s.body.length) && snh,
+	({eh, s, nearestHead}) => eh && (eh.length > s.body.length) && nearestHead(eh) > 3 && eh,
 	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
 	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
 	({eh, snh}) => eh && snh && eh.length > snh.length && eh, // Prefer escapes to saves with a chance to survive.
@@ -140,11 +141,26 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 
 		return dangerous;
 	};
+	/** Return the nearest head exposed to the given path. */
+	const nearestHead = path => {
+		let cell = mapify(state.cellAt(path[1]).concat(listify(state.cellWallsFor(cell)))),
+			nearest = null;
+		opHeads.forEach(h => {
+			let dist = rectilinearDistance(path[1], h);
+			if (cell[keyable(h)] && (!nearest || dist < nearest.dist)) {
+				nearest = {dist, h};
+			}
+		});
+
+		console.log('\t\t-- nearest / result', path[1], nearest);
+		if (nearest) return nearest.dist;
+		return 999999999;
+	}
 
 	//	Select our best bet using the preference stack.
 	let best = null, payload = {
 		enh: escapeNoHeads, eh: escapeHeads, snh: spaceNoHeads, sh: spaceHeads,
-		s: snk, isDangerous
+		s: snk, isDangerous, nearestHead
 	};
 
 	SPACE_CONSERVE_SELECT_STAGES.forEach((fn, k) => {
