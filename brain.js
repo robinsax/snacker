@@ -175,7 +175,7 @@ const conserveSpaceMove = (state, snk) => {
 *
 *	XXX: Isn't consistant for prediction because behaviour depends on snake mode.
 */
-const safeMove = (snk, to, state, stops=null) => {
+const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 	//	Compute a path to that food.
 	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (a, b) => (
 		rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
@@ -184,15 +184,15 @@ const safeMove = (snk, to, state, stops=null) => {
 
 	//	Check if trap and try to avoid.
 	let cell = state.cellAt(path[1]), cellSize = cell.length;
-	if (cellSize < snk.body.length) {
-		console.log('a* wants to trap me | would move', directionTo(snk.head, path[1]));
+	if (cellSize < snk.body.length && !attackToHead) {
+		console.log('\ta* wants to trap me | would move', directionTo(snk.head, path[1]));
 		console.log('\tsl / stps', snk.body.length, stops);
 
 		//	Add stop so we can recompute.
 		stops = stops || [];
 		stops.push({pt: path[1], p: path, cs: cellSize});
 		//	Try again.
-		return safeMove(snk, to, state, stops);
+		return safeMove(snk, to, state, stops, attackToHead);
 	}
 
 	//	Check if sticky and try to avoid.
@@ -210,7 +210,7 @@ const safeMove = (snk, to, state, stops=null) => {
 		stops = stops || [];
 		stops.push({pt: path[1]});
 		//	Try again, prefering result.
-		let retry = safeMove(snk, to, state, stops);
+		let retry = safeMove(snk, to, state, stops, attackToHead);
 		if (retry) return retry;
 		console.log('\tno way around it!');
 	}
@@ -399,7 +399,7 @@ const computeAttackMove = (snk, state) => {
 			console.log('\tchk snk / targ', op.i, targetable);
 			if (!targetable.length) return;
 
-			move = safeMove(snk, targetable[0], state);
+			move = safeMove(snk, targetable[0], state, true);
 			console.log('\tattack to snake / move fnd', op.i, move);
 		}
 	});
