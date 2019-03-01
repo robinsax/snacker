@@ -365,8 +365,8 @@ const backoffMove = state => {
 		//	If this cell has other snakes as edges ignore.
 		//	XXX: reduce to check for head.
 		if (walls.filter(({tid}) => (
-			tid !== true && tid !== state.self.i).length > 0
-		)) move = directionTo(state.self.head, pt);
+			tid !== true && tid !== state.self.i
+		).length == 0)) move = directionTo(state.self.head, pt);
 	});
 	if (move) return move;
 
