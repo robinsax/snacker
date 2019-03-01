@@ -238,7 +238,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 
 		return okayDist;
 	});
-	console.log('check set', toCheck);
+	console.log('\tcheck set', toCheck);
 
 	//	Collect snakes that can kill us.
 	let killers = state.opponents.filter(({body}) => (
@@ -272,6 +272,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 		});
 
 		let move = safeMove(state.self, f, state);
+		if (!move) return;
 		if (isFurther) further = move;
 		else found = move;
 	});
@@ -445,8 +446,8 @@ const computeMove = (data, lastState) => {
 	if (move) return wrap(move, 'chow time');
 
 	//	Maybe escape.
-	move = backoffMove(state);
-	if (move) return wrap(move, 'backing off');
+	//move = backoffMove(state);
+	//if (move) return wrap(move, 'backing off');
 
 	//	Try to conserve space.
 	move = conserveSpaceMove(state, state.self);
