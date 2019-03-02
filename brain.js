@@ -49,6 +49,10 @@ const scoreTriageCell = ({cell, path, walls, hasFood, isEscape}, state) => {
 		console.log('\t\tescape');
 		score *= 2;
 	}
+	if (state.occupationMx[path[0].y][path[0].x]) {
+		//	This is an enemy head lookahead.
+		score /= 4;
+	}
 
 	console.log('\t\tscore', path[0], score);
 	return score;
