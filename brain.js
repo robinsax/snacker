@@ -50,7 +50,7 @@ const canEscape = (walls, path, state) => {
 const conserveSpaceMove = (state, snk) => {
 	/** Managed return. */
 	const finish = rv => {
-		if (best) {
+		if (rv) {
 			console.log('selected', rv.path[0]);
 			return directionTo(snk.head, rv.path[0], state);
 		}
