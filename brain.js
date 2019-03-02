@@ -83,6 +83,7 @@ const conserveSpaceMove = (state, snk) => {
 			return {cell, path, walls, hasFood};
 		}));
 	});
+	console.log('######', options);
 
 	let best = null;
 	return finish(options[0]);
