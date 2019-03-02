@@ -245,8 +245,23 @@ const computeAttackMove = (snk, state) => {
 			console.log('\tchk snk / targ', op.i, targetable);
 			if (!targetable.length) return;
 
+			//	XXX: Check all.
 			move = safeMove(snk, targetable[0], state, null, true);
 			console.log('\tattack to snake / move fnd', op.i, move);
+
+			//	Wait, could this be a trap?
+			state.safeNeighbors(op.head, state.dangerousOccupationMx).forEach(pt => {
+				if (!move) return;
+			
+				//	Dup and add opponent head.
+				let mxToCheck = state.dangerousOccupationMx.map(a => [...a]);
+				mxToCheck[pt.y][pt.x] = op.i;
+
+				if (state.cellAt(snk.head, mxToCheck).length < snk.body.length) {
+					//	It's a trap.
+					move = null;
+				}
+			});
 		}
 	});
 
