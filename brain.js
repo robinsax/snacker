@@ -74,7 +74,7 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	});
 
 	let best = null;
-	best = cells[0];
+	best = options[0];
 	
 	//	Finish.
 	if (best) {
