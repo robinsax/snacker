@@ -47,7 +47,7 @@ const canEscape = (walls, path, state) => {
 *	XXX: Won't work properly if snk isn't self because of occupation matrix lookahead and
 *		oppenent check hardcoding.
 */
-const conserveSpaceMoveInner = (state, snk) => {
+const conserveSpaceMove = (state, snk) => {
 	/** Managed return. */
 	const finish = rv => {
 		if (best) {
