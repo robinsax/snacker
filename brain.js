@@ -251,16 +251,16 @@ const computeAttackMove = (snk, state) => {
 
 			//	Wait, could this be a trap?
 			state.safeNeighbors(op.head, state.dangerousOccupationMx).forEach(pt => {
+				console.log('\t\ttrap check', pt);
 				if (!move) return;
-			
+				
 				//	Dup and add opponent head.
 				let mxToCheck = state.dangerousOccupationMx.map(a => [...a]);
 				mxToCheck[pt.y][pt.x] = op.i;
 
-				if (state.cellAt(snk.head, mxToCheck).length < snk.body.length) {
-					//	It's a trap.
-					move = null;
-				}
+				let createdCell = state.cellAt(snk.head, mxToCheck).length;
+				console.log('\t\twould create cell sz', createdCell)
+				if (createdCell < snk.body.length) move = null;
 			});
 		}
 	});
