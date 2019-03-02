@@ -9,18 +9,6 @@ const {
 const ALPHA = 1; // XXX: Agro.
 const OMEGA = 2; // XXX: Cautious.
 
-//	The stack of space conservation selectors.
-const SPACE_CONSERVE_SELECT_STAGES = [
-	({enh}) => enh,
-	({snh, s}) => snh && (snh.length > s.body.length) && snh,
-	({eh, s, nearestHead}) => eh && (eh.length > s.body.length) && eh,
-	({eh, isDangerous}) => eh && !isDangerous(eh) && eh,
-	({sh, s, isDangerous}) => sh && !isDangerous(sh) && (sh.length > s.body.length) && sh,
-	({eh, snh}) => eh && snh && eh.length > snh.length && eh, // Prefer escapes to saves with a chance to survive.
-	({sh, snh}) => sh && snh && sh.length > snh.length && sh, // Prefer space saves with a chance to survive.
-	({snh, eh, sh}) => snh || eh || sh
-];
-
 /**
 *	Compute whether we can escape from the given cell with the given path. 
 */
@@ -229,6 +217,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 * 	XXX: snk must be self because of opponent hardcoding and occupation mx lookahead.
 */
 const computeAttackMove = (snk, state) => {
+	if (state.allEdgesMap[snk.head.y][snk.head.x]) return null;
 	let move = null;
 	console.log('attack check', state.opponents.length);
 
@@ -256,10 +245,7 @@ const computeAttackMove = (snk, state) => {
 const computeMove = (data, lastState) => {
 	let state = new GameState(data, lastState), move = null;
 	const wrap = (move, taunt=null) => { 
-		return {
-			move, taunt, 
-			state: state.save()
-		};
+		return {move, taunt, state: state.save()};
 	};
 
 	//	Prioritize safety when against walls.
