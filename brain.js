@@ -217,11 +217,11 @@ const foodMoveAggressive = (state, urgent=false) => {
 * 	XXX: snk must be self because of opponent hardcoding and occupation mx lookahead.
 */
 const computeAttackMove = (snk, state) => {
-	if (state.allEdgesMap[snk.head.y][snk.head.x]) return null;
+	if (state.allEdgesMap[keyable(snk.head)]) return null;
 	let move = null;
 	console.log('attack check', state.opponents.length);
 
-	state.opponents.forEach(op => {
+	state.opponents.sort((a, b) => {}).forEach(op => {
 		if (move) return;
 
 		if (snk.body.length > op.body.length) {
