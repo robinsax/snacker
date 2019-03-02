@@ -350,6 +350,7 @@ const computeMove = (data, lastState) => {
 			Math.min(...state.opponents.map(({head}) => rectilinearDistance(o, head)))
 		);
 		//	Sort by distance from enemy heads (nearest to furthest).
+		//	XXX: Try chokemap maxes.
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
 			console.log('\t\t## cmp opt', a, b);
 			let aD = nearestOpponent(a), bD = nearestOpponent(b);
@@ -388,7 +389,7 @@ const computeMove = (data, lastState) => {
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		needsToCatchUp = opsBySize[0].body.length > state.self.body.length - 2;
+		needsToCatchUp = opsBySize[0].body.length > (state.self.body.length - 2);
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0] && opsBySize[0].i);
 	}
 	let lowHP = state.self.health < 25;
