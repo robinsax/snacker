@@ -71,7 +71,8 @@ const triageMove = (state, snk) => {
 	console.log('conserve space option count:', cells.length, 'vs len', snk.body.length);
 
 	//	Collect optimizations in the found cells.
-	let options = cells.map(cell => {	
+	let options = [];
+	cells.forEach(cell => {	
 		console.log('\tsquiggle in cell with', cell[0]);
 		options = options.concat(createSquigglesIn(snk.head, cell).filter(p => (
 			p.length > 0
@@ -88,7 +89,8 @@ const triageMove = (state, snk) => {
 				score = scoreTriageCell(option, state);
 			return {...option, score};
 		}));
-	}).sort((a, b) => a.score - b.score);
+	});
+	options.sort((a, b) => b.score - a.score);
 	console.log('\t\toptions', options.map(JSON.stringify.bind(JSON)));
 
 	let best = null;
