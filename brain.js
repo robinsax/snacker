@@ -221,7 +221,7 @@ const computeAttackMove = (snk, state) => {
 	let move = null;
 	console.log('attack check', state.opponents.length);
 
-	state.opponents.sort((a, b) => {}).forEach(op => {
+	state.opponents.sort((a, b) => rectilinearDistance(a, snk.head) - rectilinearDistance(b, snk.head)).forEach(op => {
 		if (move) return;
 
 		if (snk.body.length > op.body.length) {
