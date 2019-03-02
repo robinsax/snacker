@@ -2,7 +2,7 @@
 const {
 	GameState, directionTo, rectilinearDistance,
 	keyable, mapify, createSquigglesIn, cellContainsOneOf, isBeside,
-	listify, flatten
+	listify, flatten, execMove
 } = require('./utils.js');
 
 //	Mode constants.
@@ -247,6 +247,7 @@ const computeAttackMove = (snk, state) => {
 
 			//	XXX: Check all.
 			move = safeMove(snk, targetable[0], state, null, true);
+			let headAfter = execMove(move, snk.head);
 			console.log('\tattack to snake / move fnd', op.i, move);
 
 			//	Wait, could this be a trap?
@@ -258,7 +259,7 @@ const computeAttackMove = (snk, state) => {
 				let mxToCheck = state.dangerousOccupationMx.map(a => [...a]);
 				mxToCheck[pt.y][pt.x] = op.i;
 
-				let createdCell = state.cellAt(snk.head, mxToCheck).length;
+				let createdCell = state.cellAt(headAfter, mxToCheck).length;
 				console.log('\t\twould create cell sz', createdCell)
 				if (createdCell < snk.body.length) move = null;
 			});

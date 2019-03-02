@@ -64,6 +64,9 @@ const MOVE_OPS = [
 	[(a, b) => a.y > b.y, 'up', north]
 ];
 
+/** Execute a move. */
+const execMove = (move, pt) => MOVE_OPS.filter(a => a[1] == move)[2](pt);
+
 /** Create a key-ready representation of a point of O(1) lookups. */
 const keyable = ({x, y}) => x + ',' + y;
 /** Recreate a point from a keyed representation. */
@@ -422,5 +425,5 @@ module.exports = {
 	isBeside, equal, keyable, unkey, mapify, listify,
 	deepEqual, uniques, createMat, south, north, east, west, 
 	createSquigglesIn, showMat, cellContainsOneOf, matToStr,
-	GameState, Snake, flatten
+	GameState, Snake, flatten, execMove
 };
