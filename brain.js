@@ -368,7 +368,6 @@ const computeMove = (data, lastState) => {
 				return aD - bD;
 			}
 		}), stops = [...options];
-		stops.reverse();
 		while (stops.length) {
 			stops.pop();
 			console.log('\ttry to centeralize w/ stops', stops);
