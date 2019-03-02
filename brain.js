@@ -117,7 +117,7 @@ const triageMove = (state, snk) => {
 *
 *	XXX: Isn't consistant for prediction because behaviour depends on snake mode.
 */
-const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
+const safeMove = (snk, to, state, stops=null, attackToHead=false, tolerateSticky=false) => {
 	console.log('\t\t-- sm h / t / sl / ath', snk.head, to, stops, attackToHead)
 	//	Compute a path to that food.
 	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt));
@@ -154,6 +154,7 @@ const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 		let retry = safeMove(snk, to, state, stops, attackToHead);
 		if (retry) return retry;
 		console.log('\tno way around it!');
+		if (!tolerateSticky) return null;
 	}
 	
 	//	It's cool.
