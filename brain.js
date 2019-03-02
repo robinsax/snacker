@@ -45,7 +45,7 @@ const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 		}
 	}
 
-	let score = cell.length;
+	let score = path.length - rectilinearDistance(path[0], state.center);
 	if (isEscape) {
 		console.log('\t\tescape');
 		score *= 2;
