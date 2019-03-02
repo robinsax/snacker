@@ -247,10 +247,12 @@ const computeAttackMove = (snk, state) => {
 
 			//	XXX: Check all.
 			move = safeMove(snk, targetable[0], state, null, true);
-			let headAfter = execMove(move, snk.head);
 			console.log('\tattack to snake / move fnd', op.i, move);
 
-			//	Wait, could this be a trap?
+			if (!move) return;
+
+			//	Wait, could this be a trap? 
+			let headAfter = execMove(move, snk.head);
 			state.safeNeighbors(op.head, state.dangerousOccupationMx).forEach(pt => {
 				console.log('\t\ttrap check', pt);
 				if (!move) return;
