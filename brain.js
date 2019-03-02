@@ -341,32 +341,17 @@ const computeMove = (data, lastState) => {
 	};
 
 	//	Prioritize safety when against walls.
-	if (state.allEdgesMap[keyable(state.self.head)]) {
+	/*if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
 		
 		//	Try to get off, prefering to move away from opponents.
-		/** Return the distance from the given cell to the nearest opponent's head. */
 		const nearestOpponent = o => (
 			Math.min(...state.opponents.map(({head}) => rectilinearDistance(o, head)))
 		);
 		//	Sort by distance from enemy heads (nearest to furthest).
 		//	XXX: Try chokemap maxes.
 		let options = state.safeNeighbors(state.self.head).sort((a, b) => {
-			console.log('\t\t## cmp opt', a, b);
-			let aD = nearestOpponent(a), bD = nearestOpponent(b);
-			console.log('\t\t\ta / b dist', aD, bD);
-
-			if (aD == bD) {
-				let aE = state.allEdgesMap[keyable(a)],
-					bE = state.allEdgesMap[keyable(b)];
-				
-				console.log('\t\t\ta / b edge', aE, bE);
-				if (aE != bE) return aE ? 1 : -1;
-				return 0;
-			}
-			else {
-				return aD - bD;
-			}
+			
 		}), stops = [...options];
 		while (stops.length) {
 			stops.pop();
@@ -382,7 +367,7 @@ const computeMove = (data, lastState) => {
 			if (state.cellAt(o).length > state.self.body.length) 
 			return wrap(directionTo(state.self.head, o, state), 'over here looks cool');
 		});
-	}
+	}*/
 
 	//	Check if we want to prioritize eating.
 	let needsToCatchUp = false;
