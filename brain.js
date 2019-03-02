@@ -29,19 +29,21 @@ const canEscape = (walls, path, state) => {
 	return isEscape;
 };
 
-const scoreTriageCell = ({cell, path, walls, wallsMap, isEscape}, state) => {
+const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 	console.log('\tpath at', path[0]);
 
 	//	We really like looping away from big enemies.
 	if (path.length > state.self.length || isEscape) {
 		//	Look for opponent walls.
-		let hasOpWalls = walls.filter(pt => {
-			let k = wallsMap[keyable(pt)];
-			console.log('\t\t', pt, k);
-			return (k !== state.self.i && k !== true);
+		let hasOpWalls = walls.filter(({tid, pt}) => {
+			console.log('\t\t', pt, tid);
+			return (tid !== state.self.i && tid !== true);
 		}).length > 0;
 
-		if (!hasOpWalls) return 99999999;
+		if (!hasOpWalls) {
+			console.log('\t\tno op walls, max it!');
+			return 99999999;
+		}
 	}
 
 	let score = cell.length;
