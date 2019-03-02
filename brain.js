@@ -41,13 +41,17 @@ const canEscape = (walls, path, state) => {
 	return isEscape;
 };
 
+const scoreTriageCell = ({cell, path, walls, hasFood, isEscape}, state) => {
+	return cell.length*(isEscape ? 2 : 1);
+}
+
 /**
 *	Compute a triage move to conserve space (inner fn).
 *
 *	XXX: Won't work properly if snk isn't self because of occupation matrix lookahead and
 *		oppenent check hardcoding.
 */
-const conserveSpaceMove = (state, snk) => {
+const triageMove = (state, snk) => {
 	/** Managed return. */
 	const finish = rv => {
 		if (rv) {
@@ -67,8 +71,7 @@ const conserveSpaceMove = (state, snk) => {
 	console.log('conserve space option count:', cells.length, 'vs len', snk.body.length);
 
 	//	Collect optimizations in the found cells.
-	let options = [];
-	cells.sort((a, b) => b.length - a.length).forEach(cell => {	
+	let options = cells.map(cell => {	
 		console.log('\tsquiggle in cell with', cell[0]);
 		options = options.concat(createSquigglesIn(snk.head, cell).filter(p => (
 			p.length > 0
@@ -78,12 +81,15 @@ const conserveSpaceMove = (state, snk) => {
 			let walls = listify(wallsMap).map(n => {
 				return {tid: wallsMap[keyable(n)], pt: n};
 			}).filter(n => n.tid),
-				hasFood = cellContainsOneOf(cell, state.food);
+				hasFood = cellContainsOneOf(cell, state.food),
+				canEscape = canEscape(walls, path, state);
 
-			return {cell, path, walls, hasFood};
+			let option = {cell, path, walls, hasFood, canEscape},
+				score = scoreTriageCell(option, state);
+			return {...option, score};
 		}));
-	});
-	console.log('######', options);
+	}).sort((a, b) => a.score - b.score);
+	console.log('\t\toptions', options.map(JSON.stringify.bind(JSON)));
 
 	let best = null;
 	return finish(options[0]);
@@ -243,6 +249,7 @@ const computeMove = (data, lastState) => {
 	};
 
 	//	Prioritize safety when against walls.
+	//	XXX: Somehow avoid walls.
 	/*if (state.allEdgesMap[keyable(state.self.head)]) {
 		console.log('eek, im near the edge');
 		
@@ -298,7 +305,7 @@ const computeMove = (data, lastState) => {
 	//if (move) return wrap(move, 'backing off');
 
 	//	Try to conserve space.
-	move = conserveSpaceMove(state, state.self);
+	move = triageMove(state, state.self);
 	if (move) return wrap(move, 'sticky situation!');
 
 	let open = state.safeNeighbors(state.self.head, state.dangerousOccupationMx)[0];
@@ -311,4 +318,4 @@ const computeMove = (data, lastState) => {
 	return wrap('left', 'gg wp');
 };
 
-module.exports = { conserveSpaceMove, computeMove };
+module.exports = { triageMove, computeMove };
