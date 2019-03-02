@@ -73,110 +73,13 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 		}));
 	});
 
-	//	Gather opponent heads.
-	let opHeads = state.opponents.map(({head}) => head);
-	if (!dangerous) {
-		//	Expand head set with lookaheads.
-		opHeads = opHeads.concat(flatten(state.opponents.map(({head}) => (
-			state.safeNeighbors(head, state.dangerousOccupationMx)
-		))));
-	} 
-
-	let opHeadsMap = mapify(opHeads);
-
-	//	XXX: This needs to be changed!
-	//	Discover best option.
-	let escapeNoHeads = null, spaceNoHeads = null, spaceHeads = null, escapeHeads = null;
-	options.forEach(opt => {
-		//	XXX: not using hasFood?
-		let {cell, path, walls, hasFood} = opt;
-		//	Check for opponent heads.
-		let hasOpponentHeads = cellContainsOneOf(cell, opHeads) || 
-			(walls.filter(({pt}) => opHeadsMap[keyable(pt)]).length > 0);
-
-		//	Check for escape.
-		let isEscape = canEscape(walls, path, state);
-		
-		//	XXX: This system sucks, got to go.
-		//	Maybe assign to maxes.
-		console.log('\trun maxes for / props', opt.path[0]);
-		if (!hasOpponentHeads) {
-			if (isEscape) {
-				if (!escapeNoHeads || (escapeNoHeads.length < path.length)) {
-					console.log('\t\tesc no heads');
-					escapeNoHeads = path;
-				}
-			}
-			else {
-				if (!spaceNoHeads || (spaceNoHeads.length < path.length)) {
-					console.log('\t\tspace no heads');
-					spaceNoHeads = path;
-				}
-			}
-		}
-		else {
-			if (isEscape) {
-				if (!escapeHeads || (escapeHeads.length < path.length)) {
-					console.log('\t\tescape w/ heads');
-					escapeHeads = path;
-				}
-			}
-			else {
-				if (!spaceHeads || (spaceHeads.length < path.length)) {
-					console.log('\t\tspace w/ heads');
-					escapeHeads = path;
-				}
-			}
-		}
-	});
-	console.log('--- begin selection');
-	/** Whether a given path is dangerous. XXX: simplistic. */
-	const isDangerous = path => {
-		let dangerous = false;
-		path.forEach(pt => {
-			if (dangerous) return;
-			
-			opHeads.forEach(h => {
-				if (isBeside(pt, h)) dangerous = true;
-			});
-		});
-
-		return dangerous;
-	};
-	/** Return the nearest head exposed to the given path. */
-	const nearestHead = path => {
-		let cell = state.cellAt(path[1]), nearest = null;
-		cell = mapify(cell.concat(listify(state.cellWallsFor(cell))));
-
-		opHeads.forEach(h => {
-			let dist = rectilinearDistance(path[1], h);
-			if (cell[keyable(h)] && (!nearest || dist < nearest.dist)) {
-				nearest = {dist, h};
-			}
-		});
-
-		console.log('\t\t-- nearest / result', path[1], nearest);
-		if (nearest) return nearest.dist;
-		return 999999999;
-	}
-
-	//	Select our best bet using the preference stack.
-	let best = null, payload = {
-		enh: escapeNoHeads, eh: escapeHeads, snh: spaceNoHeads, sh: spaceHeads,
-		s: snk, isDangerous, nearestHead
-	};
-
-	SPACE_CONSERVE_SELECT_STAGES.forEach((fn, k) => {
-		if (best) return;
-
-		best = fn(payload);
-		console.log('\tstage k', k, !!best);
-	});
+	let best = null;
+	best = cells[0];
 	
 	//	Finish.
 	if (best) {
-		console.log('selected', best[0]);
-		return directionTo(snk.head, best[0], state);
+		console.log('selected', best.path[0]);
+		return directionTo(snk.head, best.path[0], state);
 	}
 	else {
 		console.log('failed');
