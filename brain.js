@@ -47,11 +47,22 @@ const canEscape = (walls, path, state) => {
 *	XXX: Won't work properly if snk isn't self because of occupation matrix lookahead and
 *		oppenent check hardcoding.
 */
-const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
+const conserveSpaceMoveInner = (state, snk) => {
+	/** Managed return. */
+	const finish = rv => {
+		if (best) {
+			console.log('selected', rv.path[0]);
+			return directionTo(snk.head, rv.path[0], state);
+		}
+		else {
+			console.log('failed');
+			return null;
+		}
+	}
 	let cells = [];
 	//	Find all possible cells.
-	cells = state.safeNeighbors(snk.head, dangerous && state.dangerousOccupationMx).map(pt => (
-		state.cellAt(pt, dangerous && state.dangerousOccupationMx)
+	cells = state.safeNeighbors(snk.head, state.dangerousOccupationMx).map(pt => (
+		state.cellAt(pt, state.dangerousOccupationMx)
 	)).filter(c => c.length > 0);
 	console.log('conserve space option count:', cells.length, 'vs len', snk.body.length);
 
@@ -74,25 +85,12 @@ const conserveSpaceMoveInner = (state, snk, dangerous=false) => {
 	});
 
 	let best = null;
-	best = options[0];
+	return finish(options[0]);
 	
-	//	Finish.
-	if (best) {
-		console.log('selected', best.path[0]);
-		return directionTo(snk.head, best.path[0], state);
-	}
-	else {
-		console.log('failed');
-		return null;
-	}
-};
 
-/**
-*	Compute a space conservation move. 
-*/
-const conserveSpaceMove = (state, snk) => {
-	return conserveSpaceMoveInner(state, snk) || conserveSpaceMoveInner(state, snk, true);
-}
+	//	Finish.
+	return finish(null);
+};
 
 /**
 *	Compute a move to a point with safety checks. 
