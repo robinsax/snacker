@@ -37,6 +37,7 @@ const scoreTriageCell = ({cell, path, walls, wallsMap, isEscape}, state) => {
 		//	Look for opponent walls.
 		let hasOpWalls = walls.filter(pt => {
 			let k = wallsMap[keyable(pt)];
+			console.log('\t\t', pt, k);
 			return (k !== state.self.i && k !== true);
 		}).length > 0;
 
@@ -53,7 +54,7 @@ const scoreTriageCell = ({cell, path, walls, wallsMap, isEscape}, state) => {
 		score /= 4;
 	}
 
-	console.log('\t\tscore', path[0], score);
+	console.log('\t\tscore', score);
 	return score;
 }
 
