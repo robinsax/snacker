@@ -83,9 +83,9 @@ const triageMove = (state, snk) => {
 				return {tid: wallsMap[keyable(n)], pt: n};
 			}).filter(n => n.tid),
 				hasFood = cellContainsOneOf(cell, state.food),
-				canEscape = canEscape(walls, path, state);
+				isEscape = canEscape(walls, path, state);
 
-			let option = {cell, path, walls, hasFood, canEscape},
+			let option = {cell, path, walls, hasFood, isEscape},
 				score = scoreTriageCell(option, state);
 			return {...option, score};
 		}));
