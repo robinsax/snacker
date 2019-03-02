@@ -42,9 +42,15 @@ const canEscape = (walls, path, state) => {
 };
 
 const scoreTriageCell = ({cell, path, walls, hasFood, isEscape}, state) => {
-	let score = cell.length*(isEscape ? 2 : 1);
+	console.log('\tpath at', path[0]);
 
-	console.log('path at / score', path[0], score);
+	let score = cell.length;
+	if (isEscape) {
+		console.log('\t\tescape');
+		score *= 2;
+	}
+
+	console.log('\t\tscore', path[0], score);
 	return score;
 }
 
