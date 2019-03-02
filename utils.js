@@ -65,7 +65,7 @@ const MOVE_OPS = [
 ];
 
 /** Execute a move. */
-const execMove = (move, pt) => MOVE_OPS.filter(a => a[1] == move)[2](pt);
+const execMove = (move, pt) => MOVE_OPS.filter(a => a[1] == move)[0][2](pt);
 
 /** Create a key-ready representation of a point of O(1) lookups. */
 const keyable = ({x, y}) => x + ',' + y;
