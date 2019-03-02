@@ -36,7 +36,6 @@ const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 	if (path.length > state.self.length || isEscape) {
 		//	Look for opponent walls.
 		let hasOpWalls = walls.filter(({tid, pt}) => {
-			console.log('\t\t', pt, tid);
 			return (tid !== state.self.i && tid !== true);
 		}).length > 0;
 
