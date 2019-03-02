@@ -42,7 +42,10 @@ const canEscape = (walls, path, state) => {
 };
 
 const scoreTriageCell = ({cell, path, walls, hasFood, isEscape}, state) => {
-	return cell.length*(isEscape ? 2 : 1);
+	let score = cell.length*(isEscape ? 2 : 1);
+
+	console.log('path at / score', path[0], score);
+	return score;
 }
 
 /**
@@ -91,7 +94,6 @@ const triageMove = (state, snk) => {
 		}));
 	});
 	options.sort((a, b) => b.score - a.score);
-	console.log('\t\toptions', options.map(JSON.stringify.bind(JSON)));
 
 	let best = null;
 	return finish(options[0]);
