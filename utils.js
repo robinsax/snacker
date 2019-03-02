@@ -48,17 +48,17 @@ const createMat = ({width, height}, initCellVal) => {
 const matToStr = mx => mx.map(r => r.join(' ')).join('\n');
 
 /** Move point north once. */
-const north = ({x, y}) => { return {x, y: y - 1}; };
+const north = ({x, y}) => ({x, y: y - 1});
 /** Move point south once. */
-const south = ({x, y}) => { return {x, y: y + 1}; };
+const south = ({x, y}) => ({x, y: y + 1});
 /** Move point east once. */
-const east = ({x, y}) => { return {x: x + 1, y}; };
+const east = ({x, y}) => ({x: x + 1, y});
 /** Move point west once. */
-const west = ({x, y}) => { return {x: x - 1, y}; };
+const west = ({x, y}) => ({x: x - 1, y});
 
 //	Move options.
 const MOVE_OPS = [
-	[(a, b) => a.x < b.x, 'right', east],	
+	[(a, b) => a.x < b.x, 'right', east],
 	[(a, b) => a.x > b.x, 'left', west],
 	[(a, b) => a.y < b.y, 'down', south],
 	[(a, b) => a.y > b.y, 'up', north]
@@ -195,15 +195,6 @@ class Snake {
 		//	Create body point, index in segments map.
 		this.bodyMap = {};
 		this.body.forEach((pt, i) => this.bodyMap[keyable(pt)] = i);
-	}
-
-	/**
-	*	Calculate position of this snake after it takes the given number 
-	*	set moves. Doesn't assert those moves are valid.
-	*/
-	positionAfterMoves(moves) {
-		let trim = this.body.length - moves.length;
-		return [...moves, ...this.body.filter((p, i) => i < trim)];
 	}
 
 	get head() { return this.body[0]; }

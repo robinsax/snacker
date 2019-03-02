@@ -199,9 +199,7 @@ const conserveSpaceMove = (state, snk) => {
 const safeMove = (snk, to, state, stops=null, attackToHead=false) => {
 	console.log('\t\t-- sm h / t / sl / ath', snk.head, to, stops, attackToHead)
 	//	Compute a path to that food.
-	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (a, b) => (
-		rectilinearDistance(a, b)/state.chokeMap[b.y][b.x]
-	));
+	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt));
 	if (!path) return null;
 
 	//	Check if trap and try to avoid.
@@ -390,7 +388,7 @@ const computeMove = (data, lastState) => {
 	let needsToCatchUp = false;
 	if (state.opponents.length) {
 		let opsBySize = state.opponents.sort((a, b) => b.body.length - a.body.length);
-		needsToCatchUp = opsBySize[0].body.length > state.self.body.length;
+		needsToCatchUp = opsBySize[0].body.length > state.self.body.length - 2;
 		console.log('needs to catch up / to', needsToCatchUp, opsBySize[0] && opsBySize[0].i);
 	}
 	let lowHP = state.self.health < 25;
