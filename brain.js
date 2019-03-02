@@ -6,8 +6,7 @@ const {
 } = require('./utils.js');
 
 //	Mode constants.
-const ALPHA = 1; // XXX: Agro.
-const OMEGA = 2; // XXX: Cautious.
+const VARIANT = +process.env.VARIANT;
 
 /**
 *	Compute whether we can escape from the given cell with the given path. 
@@ -29,7 +28,36 @@ const canEscape = (walls, path, state) => {
 	return isEscape;
 };
 
-const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
+const scoreTriageCell1 = ({cell, path, walls, isEscape}, state) => {
+	console.log('\tpath at', path[0]);
+
+	//	Hate that.
+	if (state.occupationMx[path[0].y][path[0].x]) return -99999999;
+
+	//	We really like looping away from big enemies.
+	if (path.length > state.self.length || isEscape) {
+		//	Look for opponent walls.
+		let hasOpWalls = walls.filter(({tid, pt}) => {
+			return (tid !== state.self.i && tid !== true);
+		}).length > 0;
+
+		if (!hasOpWalls) {
+			console.log('\t\tno op walls, max it!');
+			return 99999999;
+		}
+	}
+
+	let score = path.length - rectilinearDistance(path[0], state.center);
+	if (isEscape) {
+		console.log('\t\tescape');
+		score *= 2;
+	}
+
+	console.log('\t\tscore', score);
+	return score;
+}
+
+const scoreTriageCell2 = ({cell, path, walls, isEscape}, state) => {
 	console.log('\tpath at', path[0]);
 
 	//	We really like looping away from big enemies.
@@ -45,7 +73,7 @@ const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 		}
 	}
 
-	let score = path.length + rectilinearDistance(path[0], state.center);
+	let score = path.length - rectilinearDistance(path[0], state.center);
 	if (isEscape) {
 		console.log('\t\tescape');
 		score *= 2;
@@ -58,6 +86,74 @@ const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 	console.log('\t\tscore', score);
 	return score;
 }
+
+const scoreTriageCell3 = ({cell, path, walls, isEscape}, state) => {
+	console.log('\tpath at', path[0]);
+
+	if (state.occupationMx[path[0].y][path[0].x]) return -99999999;
+
+	//	We really like looping away from big enemies.
+	if (path.length > state.self.length || isEscape) {
+		//	Look for opponent walls.
+		let hasOpWalls = walls.filter(({tid, pt}) => {
+			return (tid !== state.self.i && tid !== true);
+		}).length > 0;
+
+		if (!hasOpWalls) {
+			console.log('\t\tno op walls, max it!');
+			return 99999999;
+		}
+	}
+
+	let opHeads = state.opponents.map(({head}) => head);
+
+	let score = path.length - rectilinearDistance(path[0], state.center)
+		+ (Math.min(...opHeads.map(h => rectilinearDistance(path[0], h)))*4);
+	if (isEscape) {
+		console.log('\t\tescape');
+		score *= 2;
+	}
+
+	console.log('\t\tscore', score);
+	return score;
+}
+
+const scoreTriageCell4 = ({cell, path, walls, isEscape}, state) => {
+	console.log('\tpath at', path[0]);
+
+	//	We really like looping away from big enemies.
+	if (path.length > state.self.length || isEscape) {
+		//	Look for opponent walls.
+		let hasOpWalls = walls.filter(({tid, pt}) => {
+			return (tid !== state.self.i && tid !== true);
+		}).length > 0;
+
+		if (!hasOpWalls) {
+			console.log('\t\tno op walls, max it!');
+			return 99999999;
+		}
+	}
+
+	let opHeads = state.opponents.map(({head}) => head);
+
+	let score = path.length - rectilinearDistance(path[0], state.center)
+		+ (Math.min(...opHeads.map(h => rectilinearDistance(path[0], h)))*4);
+	if (isEscape) {
+		console.log('\t\tescape');
+		score *= 2;
+	}
+	if (state.occupationMx[path[0].y][path[0].x]) {
+		//	This is an enemy head lookahead.
+		score /= 4;
+	}
+
+	console.log('\t\tscore', score);
+	return score;
+}
+
+const TRIAGE = [
+	scoreTriageCell1, scoreTriageCell2, scoreTriageCell3, scoreTriageCell4
+];
 
 /**
 *	Compute a triage move to conserve space (inner fn).
@@ -100,7 +196,7 @@ const triageMove = (state, snk) => {
 				isEscape = canEscape(walls, path, state);
 
 			let option = {cell, path, walls, wallsMap, hasFood, isEscape},
-				score = scoreTriageCell(option, state);
+				score = scoreTriageCell3(option, state);//TRIAGE[VARIANT](option, state);
 			return {...option, score};
 		}));
 	});
@@ -234,6 +330,7 @@ const computeAttackMove = (snk, state) => {
 	let move = null;
 	console.log('attack check', state.opponents.length);
 
+	let checkMx = state.dangerousOccupationMx.map(a => [...a]);
 	state.opponents.sort((a, b) => rectilinearDistance(a, snk.head) - rectilinearDistance(b, snk.head)).forEach(op => {
 		if (move) return;
 
@@ -258,12 +355,15 @@ const computeAttackMove = (snk, state) => {
 				if (!move) return;
 				
 				//	Dup and add opponent head.
-				let mxToCheck = state.dangerousOccupationMx.map(a => [...a]);
+				let mxToCheck = checkMx.map(a => [...a]);
 				mxToCheck[pt.y][pt.x] = op.i;
 
 				let createdCell = state.cellAt(headAfter, mxToCheck).length;
 				console.log('\t\twould create cell sz', createdCell)
-				if (createdCell < snk.body.length) move = null;
+				if (createdCell < snk.body.length) {
+					move = null;
+					checkMx = mxToCheck;
+				}
 			});
 		}
 	});
