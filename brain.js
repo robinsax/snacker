@@ -139,7 +139,11 @@ const triageMove = (state, snk) => {
 const safeMove = (snk, to, state, stops=null, attackToHead=false, tolerateSticky=false) => {
 	console.log('\t\t-- sm h / t / sl / ath', snk.head, to, stops, attackToHead)
 	//	Compute a path to that food.
-	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt));
+	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (f, t) => {
+		let rv = rectilinearDistance(f, t)*(state.allEdgesMap[keyable(t)] ? 3 : 1);
+		console.log('\t\t\t####', f, t, rv);
+		return rv;
+	});
 	if (!path) return null;
 
 	//	Check if trap and try to avoid.
@@ -221,7 +225,7 @@ const foodMoveAggressive = (state, urgent=false) => {
 		if (getsSticky) return;
 
 		//	Skip moves that will trap us.
-		if (state.cellAt(f).length < state.self.body.length) {
+		if (state.cellAt(f).length - 2 < state.self.body.length) {
 			console.log('\twould trap!');
 			return;
 		}
