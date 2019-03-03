@@ -35,23 +35,23 @@ const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
 		state.self.body.length + 
 		state.food.filter(f => cellMap[keyable(f)]).length
 	);
+	let opHeads = state.opponents.map(({head}) => head),
+		opHeadMap = mapify(opHeads);
 	if (canFit || isEscape) {
 		//	Look for opponent walls.
 		let hasOpWalls = walls.filter(({tid, pt}) => {
-			return (tid !== state.self.i && tid !== true);
+			return !opHeadMap[keyable(pt)];
 		}).length > 0;
 
 		if (!hasOpWalls) {
-			console.log('\t\tno op walls, max it!');
+			console.log('\t\tno op head walls, max it!');
 			return 99999999;
 		}
 	}
 
-	let opHeads = state.opponents.map(({head}) => head),
-		opHeadMap = mapify(opHeads),
-		hasOpHeads = walls.map(({pt}) => (
-			opHeadMap[keyable(pt)]
-		)).filter(a => a).length > 0;
+	let hasOpHeads = walls.map(({pt}) => (
+		opHeadMap[keyable(pt)]
+	)).filter(a => a).length > 0;
 
 	let score = path.length - rectilinearDistance(path[0], state.center)
 		+ Math.min(...opHeads.map(h => {
