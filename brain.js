@@ -5,9 +5,6 @@ const {
 	listify, flatten, execMove
 } = require('./utils.js');
 
-//	Mode constants.
-const VARIANT = +process.env.VARIANT;
-
 /**
 *	Compute whether we can escape from the given cell with the given path. 
 */
@@ -28,14 +25,17 @@ const canEscape = (walls, path, state) => {
 	return isEscape;
 };
 
-const scoreTriageCell1 = ({cell, path, walls, isEscape}, state) => {
-	console.log('\tpath at', path[0]);
-
-	//	Hate that.
-	if (state.occupationMx[path[0].y][path[0].x]) return -99999999;
+/** Score a triage cell + path. */
+const scoreTriageCell = ({cell, path, walls, isEscape}, state) => {
+	console.log('\tpath at', path[0], 'cell sz', cell.length);
+	let cellMap = mapify(cell);
 
 	//	We really like looping away from big enemies.
-	if (path.length > state.self.length || isEscape) {
+	let canFit = path.length > (
+		state.self.body.length + 
+		state.food.filter(f => cellMap[keyable(f)]).length
+	);
+	if (canFit || isEscape) {
 		//	Look for opponent walls.
 		let hasOpWalls = walls.filter(({tid, pt}) => {
 			return (tid !== state.self.i && tid !== true);
@@ -47,113 +47,35 @@ const scoreTriageCell1 = ({cell, path, walls, isEscape}, state) => {
 		}
 	}
 
-	let score = path.length - rectilinearDistance(path[0], state.center);
-	if (isEscape) {
-		console.log('\t\tescape');
-		score *= 2;
+	let opHeads = state.opponents.map(({head}) => head),
+		opHeadMap = mapify(opHeads),
+		hasOpHeads = walls.map(({pt}) => (
+			opHeadMap[keyable(pt)]
+		)).filter(a => a).length > 0;
+
+	let score = path.length - rectilinearDistance(path[0], state.center)
+		+ Math.min(...opHeads.map(h => {
+			let pathBetween = state.aStarTo(path[0], h, null, null, state.dangerousOccupationMx);
+			
+			return pathBetween ? pathBetween.length : 0;
+		}));
+	if (hasOpHeads) {
+		console.log('\t\top heads');
+		score /= 2;
 	}
-
-	console.log('\t\tscore', score);
-	return score;
-}
-
-const scoreTriageCell2 = ({cell, path, walls, isEscape}, state) => {
-	console.log('\tpath at', path[0]);
-
-	//	We really like looping away from big enemies.
-	if (path.length > state.self.length || isEscape) {
-		//	Look for opponent walls.
-		let hasOpWalls = walls.filter(({tid, pt}) => {
-			return (tid !== state.self.i && tid !== true);
-		}).length > 0;
-
-		if (!hasOpWalls) {
-			console.log('\t\tno op walls, max it!');
-			return 99999999;
-		}
-	}
-
-	let score = path.length - rectilinearDistance(path[0], state.center);
-	if (isEscape) {
+	else if (isEscape) {
 		console.log('\t\tescape');
 		score *= 2;
 	}
 	if (state.occupationMx[path[0].y][path[0].x]) {
 		//	This is an enemy head lookahead.
+		console.log('\t\toccupied');
 		score /= 4;
 	}
 
 	console.log('\t\tscore', score);
 	return score;
 }
-
-const scoreTriageCell3 = ({cell, path, walls, isEscape}, state) => {
-	console.log('\tpath at', path[0]);
-
-	if (state.occupationMx[path[0].y][path[0].x]) return -99999999;
-
-	//	We really like looping away from big enemies.
-	if (path.length > state.self.length || isEscape) {
-		//	Look for opponent walls.
-		let hasOpWalls = walls.filter(({tid, pt}) => {
-			return (tid !== state.self.i && tid !== true);
-		}).length > 0;
-
-		if (!hasOpWalls) {
-			console.log('\t\tno op walls, max it!');
-			return 99999999;
-		}
-	}
-
-	let opHeads = state.opponents.map(({head}) => head);
-
-	let score = path.length - rectilinearDistance(path[0], state.center)
-		+ (Math.min(...opHeads.map(h => rectilinearDistance(path[0], h)))*4);
-	if (isEscape) {
-		console.log('\t\tescape');
-		score *= 2;
-	}
-
-	console.log('\t\tscore', score);
-	return score;
-}
-
-const scoreTriageCell4 = ({cell, path, walls, isEscape}, state) => {
-	console.log('\tpath at', path[0]);
-
-	//	We really like looping away from big enemies.
-	if (path.length > state.self.length || isEscape) {
-		//	Look for opponent walls.
-		let hasOpWalls = walls.filter(({tid, pt}) => {
-			return (tid !== state.self.i && tid !== true);
-		}).length > 0;
-
-		if (!hasOpWalls) {
-			console.log('\t\tno op walls, max it!');
-			return 99999999;
-		}
-	}
-
-	let opHeads = state.opponents.map(({head}) => head);
-
-	let score = path.length - rectilinearDistance(path[0], state.center)
-		+ (Math.min(...opHeads.map(h => rectilinearDistance(path[0], h)))*4);
-	if (isEscape) {
-		console.log('\t\tescape');
-		score *= 2;
-	}
-	if (state.occupationMx[path[0].y][path[0].x]) {
-		//	This is an enemy head lookahead.
-		score /= 4;
-	}
-
-	console.log('\t\tscore', score);
-	return score;
-}
-
-const TRIAGE = [
-	scoreTriageCell1, scoreTriageCell2, scoreTriageCell3, scoreTriageCell4
-];
 
 /**
 *	Compute a triage move to conserve space (inner fn).
@@ -196,7 +118,7 @@ const triageMove = (state, snk) => {
 				isEscape = canEscape(walls, path, state);
 
 			let option = {cell, path, walls, wallsMap, hasFood, isEscape},
-				score = scoreTriageCell3(option, state);//TRIAGE[VARIANT](option, state);
+				score = scoreTriageCell(option, state);
 			return {...option, score};
 		}));
 	});
@@ -298,6 +220,12 @@ const foodMoveAggressive = (state, urgent=false) => {
 		if (getsSticky) console.log('\tagro get', f, 'is sticky');
 		if (getsSticky) return;
 
+		//	Skip moves that will trap us.
+		if (state.cellAt(f).length < state.self.body.length) {
+			console.log('\twould trap!');
+			return;
+		}
+
 		//	Check if we're further than someone else.
 		let distance = rectilinearDistance(state.self.head, f),
 			isFurther = false;
@@ -373,8 +301,8 @@ const computeAttackMove = (snk, state) => {
 }
 
 /** Compute the move for the given request. */
-const computeMove = (data, lastState) => {
-	let state = new GameState(data, lastState), move = null;
+const computeMove = (data, turn) => {
+	let state = new GameState(data, turn), move = null;
 	const wrap = (move, taunt=null) => { 
 		return {move, taunt, state: state.save()};
 	};

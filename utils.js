@@ -205,7 +205,7 @@ class Snake {
 
 /** The base game state class. */
 class GameState {
-	constructor({board: {width, height, snakes, food}, you: {id}}, {turn}) {
+	constructor({board: {width, height, snakes, food}, you: {id}}, turn) {
 		this.size = {width, height};
 		this.snakes = snakes.map((s, i) => new Snake(s, i + 1, s.id == id));
 		this.opponents = this.snakes.filter(s => !s.self);
