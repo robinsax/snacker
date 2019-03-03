@@ -141,7 +141,7 @@ const safeMove = (snk, to, state, stops=null, attackToHead=false, tolerateSticky
 	//	Compute a path to that food.
 	let path = state.aStarTo(snk.head, to, stops && stops.map(({pt}) => pt), (f, t) => {
 		let rv = rectilinearDistance(f, t)*(state.allEdgesMap[keyable(t)] ? 3 : 1);
-		console.log('\t\t\t####', f, t, rv);
+		//console.log('\t\t\t####', f, t, rv);
 		return rv;
 	});
 	if (!path) return null;
